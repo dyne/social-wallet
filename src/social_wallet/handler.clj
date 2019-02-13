@@ -16,151 +16,18 @@
 ;; If you modify this Program, or any covered work, by linking or combining it with any library (or a modified version of that library), containing parts covered by the terms of EPL v 1.0, the licensors of this Program grant you additional permission to convey the resulting work. Your modified version must prominently offer all users interacting with it remotely through a computer network (if your version supports such interaction) an opportunity to receive the Corresponding Source of your version by providing access to the Corresponding Source from a network server at no charge, through some standard or customary means of facilitating copying of software. Corresponding Source for a non-source form of such a combination shall include the source code for the parts of the libraries (dependencies) covered by the terms of EPL v 1.0 used as well as that of the covered work.
 
 (ns social-wallet.handler
-    (:require
-     [clojure.string :as str]
-     [clojure.java.io :as io]
-     [cheshire.core :as json]
-     [compojure.core :refer :all]
-     [compojure.handler :refer :all]
-     [compojure.route :as route]
-     [compojure.response :as response]
+  (:require [ring.middleware.defaults :refer
+             [wrap-defaults site-defaults]]
+            [ring.middleware.cors :refer [wrap-cors]]
+            [compojure.core :refer :all]
+            [compojure.route :as route]))
 
-     [ring.adapter.jetty :refer :all]
-     [ring.middleware.session :refer :all]
-     [ring.middleware.accept :refer [wrap-accept]]
-     [ring.middleware.defaults :refer [wrap-defaults site-defaults]]
+(defroutes app
+  (GET "/" [] "<h1>Hello World</h1>")
+  (route/not-found "<h1>Page not found</h1>"))
 
-     [failjure.core :as f]
-     [taoensso.timbre :as log]
-     [just-auth.core :as auth]
-
-     [social-wallet.session :as s]
-     [auxiliary.config :as conf]
-     [social-wallet.webpage :as web]
-     [social-wallet.ring :as ring])
-    (:import java.io.File)
-    (:gen-class))
-
-(defonce config (conf/load-config "social-wallet" conf/default-settings))
-
-(defroutes app-routes
-
-  (GET "/" request (web/render "Hello World!"));; web/readme))
-
-  ;; NEW ROUTES HERE
-
-
-
-
-  ;; JUST-AUTH ROUTES
-  (GET "/login" request
-       (f/attempt-all
-        [acct (s/check-account request)]
-        (web/render acct
-                    [:div
-                     [:h1 (str "Already logged in with account: "
-                               (:email acct))]
-                     [:h2 [:a {:href "/logout"} "Logout"]]])
-        (f/when-failed [e]
-          (web/render web/login-form))))
-  (POST "/login" request
-        (f/attempt-all
-         [username (s/param request :username)
-          password (s/param request :password)
-          logged (auth/sign-in
-                  @ring/auth username password {})]
-         ;; TODO: pass :ip-address in last argument map
-         (let [session {:session {:config config
-                                  :auth logged}}]
-           (conj session
-                 (web/render
-                  logged
-                  [:div
-                   [:h1 "Logged in: " username]
-                   (web/render-yaml session)])))
-         (f/when-failed [e]
-           (web/render-error-page
-            (str "Login failed: " (f/message e))))))
-  (GET "/session" request
-       (-> (:session request) web/render-yaml web/render))
-  (GET "/logout" request
-       (conj {:session {:config config}}
-             (web/render [:h1 "Logged out."])))
-  (GET "/signup" request
-       (web/render web/signup-form))
-  (POST "/signup" request
-        (f/attempt-all
-         [name (s/param request :name)
-          email (s/param request :email)
-          password (s/param request :password)
-          repeat-password (s/param request :repeat-password)
-          activation {:activation-uri
-                      (get-in request [:headers "host"])}]
-         (web/render
-          (if (= password repeat-password)
-            (f/try*
-             (f/if-let-ok?
-                 [signup (auth/sign-up @ring/auth
-                                       name
-                                       email
-                                       password
-                                       activation
-                                       [])]
-               [:div
-                [:h2 (str "Account created: "
-                          name " &lt;" email "&gt;")]
-                [:h3 "Account pending activation."]]
-               (web/render-error
-                (str "Failure creating account: "
-                     (f/message signup)))))
-            (web/render-error
-               "Repeat password didnt match")))
-         (f/when-failed [e]
-           (web/render-error-page
-            (str "Sign-up failure: " (f/message e))))))
-  (GET "/activate/:email/:activation-id"
-       [email activation-id :as request]
-       (let [activation-uri
-             (str "http://"
-                  (get-in request [:headers "host"])
-                  "/activate/" email "/" activation-id)]
-         (web/render
-          [:div
-           (f/if-let-failed?
-               [act (auth/activate-account
-                     @ring/auth email
-                     {:activation-link activation-uri})]
-             (web/render-error
-              [:div
-               [:h1 "Failure activating account"]
-               [:h2 (f/message act)]
-               [:p (str "Email: " email " activation-id: " activation-id)]])
-             [:h1 (str "Account activated - " email)])])))
-  ;; -- end of JUST-AUTH
-
-  (POST "/" request
-        ;; generic endpoint for canceled operations
-        (web/render (s/check-account request)
-                    [:div {:class (str "alert alert-danger") :role "alert"}
-                     (s/param request :message)]))
-
-  (route/resources "/")
-  (route/not-found (web/render-error-page "Page Not Found"))
-  ) ;; end of routes
-
-(def app
-  (-> (wrap-defaults app-routes ring/app-defaults)
-      (wrap-accept {:mime ["text/html"]
-                    ;; preference in language, fallback to english
-                    :language ["en" :qs 0.5
-                               "it" :qs 1
-                               "nl" :qs 1
-                               "hr" :qs 1]})
-      (wrap-session)))
-
-;; for uberjar
-(defn -main []
-  (println "Starting standalone jetty server on http://localhost:6060")
-  (run-jetty app {:port 6060
-                  :host "localhost"
-                  :join? true}))
+#_(def app
+  (wrap-cors
+   (wrap-defaults rest-api rest-api-defaults)
+   :access-control-allow-origin [#".*"]
+   :access-control-allow-methods [:get :post]))
