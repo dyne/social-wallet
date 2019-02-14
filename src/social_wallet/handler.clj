@@ -19,15 +19,20 @@
   (:require [ring.middleware.defaults :refer
              [wrap-defaults site-defaults]]
             [ring.middleware.cors :refer [wrap-cors]]
+
             [compojure.core :refer :all]
-            [compojure.route :as route]))
+            [compojure.route :as route]
+
+            [failjure.core :as f]
+
+            [social-wallet.webpage :as web]))
 
 (defroutes app
-  (GET "/" [] "<h1>Hello World</h1>")
+  (GET "/" [] "<h1>Welcome to the Social Wallet</h1>")
+  (GET "/login" request
+       (web/render "an email"
+                   [:div
+                    [:h1 (str "Already logged in with account: "
+                              (:email "an email"))]
+                    [:h2 [:a {:href "/logout"} "Logout"]]]))
   (route/not-found "<h1>Page not found</h1>"))
-
-#_(def app
-  (wrap-cors
-   (wrap-defaults rest-api rest-api-defaults)
-   :access-control-allow-origin [#".*"]
-   :access-control-allow-methods [:get :post]))
