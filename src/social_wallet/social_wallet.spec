@@ -17,27 +17,8 @@
 
 (ns social-wallet.ring
   (:require [taoensso.timbre :as log]
-            [clojure.spec.alpha :as spec]
-            [yummy.config :as yc]))
+            [clojure.spec.alpha :as spec]))
 
-(defonce config (atom {}))
-(defonce app-state (atom {}))
 
-(defn conf->mongo-uri [mongo-conf]
-  (str "mongodb://" (:host mongo-conf) ":" (:port mongo-conf) "/" (:db mongo-conf)))
-
-(defn init []
-  (log/info "Loading config...")
-
-  (reset! config (yc/load-config {:path "config.yaml" :spec ::config :die-fn (log/error "An error occured while trying to read the conf")}))
-  
-  ;; Connect to DB
-  
-
-  ;; Create collections if not there
-
-  ;; start authenticator
-
-  ;; Start connection to swapi
-  
-  (log/info "Config loaded."))
+(spec/def ::config (spec/keys :req-un [::webserver ::just-auth ::swapi]))
+(spec/def ::just-auth-config (spec/keys :req-un [::webserver ::just-auth ::swapi]))

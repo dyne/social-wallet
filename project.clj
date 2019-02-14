@@ -45,8 +45,8 @@
                  ;; authentication library
                  [org.clojars.dyne/just-auth "0.4.0"]
 
-                 ;; parsing configs if any
-                 [io.forward/yaml "1.0.9"]
+                 ;; yaml config
+                 [exoscale/yummy "0.2.6"]
 
                  ;; Data validation
                  [prismatic/schema "1.1.10"]
