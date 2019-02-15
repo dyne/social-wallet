@@ -8,7 +8,7 @@ just-auth:
     host: localhost
     port: 27017
     db: social-wallet
-  throtlling:
+  throttling:
     criteria: #{:email :ip-address} 
     type: "block"
     time-window-secs: 3600

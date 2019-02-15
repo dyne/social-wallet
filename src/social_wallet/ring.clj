@@ -18,7 +18,8 @@
 (ns social-wallet.ring
   (:require [taoensso.timbre :as log]
             [clojure.spec.alpha :as spec]
-            [yummy.config :as yc]))
+            [yummy.config :as yc]
+            social-wallet.spec))
 
 (defonce config (atom {}))
 (defonce app-state (atom {}))
