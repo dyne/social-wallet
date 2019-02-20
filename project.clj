@@ -42,17 +42,23 @@
                  ;; logging done right with timbre
                  [com.taoensso/timbre "4.10.0"]
 
-                 ;; authentication library
-                 [org.clojars.dyne/just-auth "0.4.0"]
-
                  ;; yaml config
                  [exoscale/yummy "0.2.6"]
 
                  ;; Data validation
                  [prismatic/schema "1.1.10"]
 
+                 ;; State management
+                 [mount "0.1.16"]
+                 
+                 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Dyne libs
+                 ;;
                  ;; Common auxiliary function such as config reader
-                 [org.clojars.dyne/auxiliary "0.5.0-SNAPSHOT"]]
+                 [org.clojars.dyne/auxiliary "0.5.0-SNAPSHOT"]
+                 ;; storage lib
+                 [org.clojars.dyne/clj-storage "0.9.0"]
+                 ;; authentication library
+                 [org.clojars.dyne/just-auth "0.5.0-SNAPSHOT"]]
 
 
   :pendatic? :warn

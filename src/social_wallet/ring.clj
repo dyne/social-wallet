@@ -19,6 +19,11 @@
   (:require [taoensso.timbre :as log]
             [clojure.spec.alpha :as spec]
             [yummy.config :as yc]
+            [clj-storage.db.mongo :as mongo]
+            [just-auth.db.just-auth :as auth-db]
+            [just-auth.core :as auth]
+            [failjure.core :as f]
+            [mount.core :refer [defstate]]
             social-wallet.spec))
 
 (defonce config (atom {}))
@@ -27,18 +32,33 @@
 (defn conf->mongo-uri [mongo-conf]
   (str "mongodb://" (:host mongo-conf) ":" (:port mongo-conf) "/" (:db mongo-conf)))
 
+(defn connect-db [app-state mongo-conf]
+  (if (:db (log/spy @app-state))
+    app-state
+    (f/attempt-all [uri (conf->mongo-uri (log/spy mongo-conf))
+                    db (mongo/get-mongo-db uri)]
+                   #(assoc % :db db)
+                   (f/if-failed [e]
+                                (log/error (str "Could not connect to db: " (f/message e)))
+                                (System/exit 0)))))
+
 (defn init []
   (log/info "Loading config...")
 
-  (reset! config (yc/load-config {:path "config.yaml" :spec ::config :die-fn (log/error "An error occured while trying to read the conf")}))
+  (reset! config (yc/load-config {:path "config.yaml" :spec ::config}))
   
   ;; Connect to DB
-  
+  (swap! app-state #(connect-db % (-> @config :just-auth :mongo-config)))
 
-  ;; Create collections if not there
+  (log/info "APP STATE " @app-state)
+  
+  ;; Create collections
+  (swap! app-state #(assoc % :stores (auth-db/create-auth-stores (:db @app-state))))
 
   ;; start authenticator
+  (swap! app-state  #(assoc % :authenticator (auth/email-based-authentication (:stores @app-state) (:email-conf config) (:throttling-config config))))
 
   ;; Start connection to swapi
+  ;; TODO: think here, treat swapi as separate instance?
   
   (log/info "Config loaded."))

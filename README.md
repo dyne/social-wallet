@@ -3,7 +3,7 @@
 A generic social wallet UI which uses the social-wallet-api for a beckend
 
 <a href="https://www.dyne.org"><img
-src="https://secrets.dyne.org/static/img/swbydyne.png"
+src="https://zenroom.dyne.org/img/software_by_dyne.png"
 alt="software by Dyne.org"
 title="software by Dyne.org" class="pull-right"></a>
 
