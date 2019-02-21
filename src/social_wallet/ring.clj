@@ -26,39 +26,48 @@
             [mount.core :refer [defstate]]
             social-wallet.spec))
 
-(defonce config (atom {}))
 (defonce app-state (atom {}))
 
 (defn conf->mongo-uri [mongo-conf]
   (str "mongodb://" (:host mongo-conf) ":" (:port mongo-conf) "/" (:db mongo-conf)))
 
-(defn connect-db [app-state mongo-conf]
-  (if (:db (log/spy @app-state))
+(defn connect-db [app-state]
+  (if (:db (log/spy app-state))
     app-state
-    (f/attempt-all [uri (conf->mongo-uri (log/spy mongo-conf))
+    (f/attempt-all [uri (conf->mongo-uri (-> app-state :config :just-auth :mongo-config))
                     db (mongo/get-mongo-db uri)]
-                   #(assoc % :db db)
+                   (assoc app-state :db db)
                    (f/if-failed [e]
                                 (log/error (str "Could not connect to db: " (f/message e)))
                                 (System/exit 0)))))
 
 (defn init []
   (log/info "Loading config...")
-
-  (reset! config (yc/load-config {:path "config.yaml" :spec ::config}))
+  (swap! app-state #(assoc % :config (yc/load-config {:path "config.yaml" :spec ::config})))
+  (log/info "Config loaded.")
   
   ;; Connect to DB
-  (swap! app-state #(connect-db % (-> @config :just-auth :mongo-config)))
-
-  (log/info "APP STATE " @app-state)
+  (swap! app-state connect-db)
   
   ;; Create collections
   (swap! app-state #(assoc % :stores (auth-db/create-auth-stores (:db @app-state))))
 
+  (log/info "APP STATE " @app-state)
+  
   ;; start authenticator
-  (swap! app-state  #(assoc % :authenticator (auth/email-based-authentication (:stores @app-state) (:email-conf config) (:throttling-config config))))
+  (f/attempt-all [config-path (-> @app-state :config :just-auth :email-config)
+                  config (yc/load-config {:path (log/spy config-path)
+                                          :spec ::email-conf})
+                  authenticator (auth/email-based-authentication
+                                 (:stores @app-state)
+                                 config
+                                 (-> @app-state :config :just-auth :throttling))]
+                 (swap! app-state  #(assoc % :authenticator authenticator))
+                 (f/if-failed [e]
+                              (log/error (str "Could start the authentication service: " (f/message e)))
+                              (System/exit 0)))
+  
 
   ;; Start connection to swapi
   ;; TODO: think here, treat swapi as separate instance?
-  
-  (log/info "Config loaded."))
+)

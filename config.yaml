@@ -3,7 +3,7 @@ webserver:
   ssl-redirect: false
 
 just-auth:
-  email-config: "email-config.yml"
+  email-config: "email-conf.yaml"
   mongo-config:
     host: localhost
     port: 27017
