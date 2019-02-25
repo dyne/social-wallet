@@ -9,8 +9,8 @@ just-auth:
     port: 27017
     db: social-wallet
   throttling:
-    criteria: #{:email :ip-address} 
-    type: "block"
+    criteria: !!set {!keyword email: null, !keyword ip-address: null}
+    type: !keyword block
     time-window-secs: 3600
     threshold: 1000
 

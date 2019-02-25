@@ -32,7 +32,7 @@
   (str "mongodb://" (:host mongo-conf) ":" (:port mongo-conf) "/" (:db mongo-conf)))
 
 (defn connect-db [app-state]
-  (if (:db (log/spy app-state))
+  (if (:db app-state)
     app-state
     (f/attempt-all [uri (conf->mongo-uri (-> app-state :config :just-auth :mongo-config))
                     db (mongo/get-mongo-db uri)]
@@ -56,7 +56,7 @@
   
   ;; start authenticator
   (f/attempt-all [config-path (-> @app-state :config :just-auth :email-config)
-                  config (yc/load-config {:path (log/spy config-path)
+                  config (yc/load-config {:path config-path
                                           :spec ::email-conf})
                   authenticator (auth/email-based-authentication
                                  (:stores @app-state)
