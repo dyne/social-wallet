@@ -30,7 +30,7 @@
 (defn parse-body [body]
   (cheshire/parse-string (slurp body) true))
 
-(against-background [(before :contents (r/init))
+(against-background [(before :contents (r/init "test-resources/config.yaml"))
                      #_(after :contents (h/destroy))]
 
                     (facts "Check that the app state is loaded properly"

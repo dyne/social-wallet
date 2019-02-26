@@ -1,0 +1,18 @@
+webserver:
+  anti-forgery: false
+  ssl-redirect: false
+
+just-auth:
+  email-config: "test-resources/email-conf.yaml"
+  mongo-config:
+    host: localhost
+    port: 27017
+    db: social-wallet
+  throttling:
+    criteria: !!set {!keyword email: null, !keyword ip-address: null}
+    type: !keyword block
+    time-window-secs: 3600
+    threshold: 1000
+
+swapi:
+  endpoint: "http://swapi.dyne.org"

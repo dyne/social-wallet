@@ -42,8 +42,10 @@
                                 (System/exit 0)))))
 
 (defn init []
+  (init "config.yaml"))
+(defn init [path]
   (log/info "Loading config...")
-  (swap! app-state #(assoc % :config (yc/load-config {:path "config.yaml" :spec ::config})))
+  (swap! app-state #(assoc % :config (yc/load-config {:path path :spec ::config})))
   (log/info "Config loaded.")
   
   ;; Connect to DB
