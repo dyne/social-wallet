@@ -25,10 +25,17 @@
 
             [failjure.core :as f]
 
-            [social-wallet.webpage :as web]))
+            [social-wallet
+             [webpage :as web]
+             [ring :as r]]))
 
 (defroutes app
   (GET "/" [] "<h1>Welcome to the Social Wallet</h1>")
+  (GET "/app-state" request
+       (web/render "lala"
+        [:div
+         [:h1 "App State"]
+         [:p @r/app-state]]))
   (GET "/login" request
        (web/render "an email"
                    [:div

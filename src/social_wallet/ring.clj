@@ -35,41 +35,53 @@
   (if (:db app-state)
     app-state
     (f/attempt-all [uri (conf->mongo-uri (-> app-state :config :just-auth :mongo-config))
-                    db (mongo/get-mongo-db uri)]
+                    db (mongo/get-mongo-db-and-conn uri)]
                    (assoc app-state :db db)
                    (f/if-failed [e]
                                 (log/error (str "Could not connect to db: " (f/message e)))
                                 (System/exit 0)))))
 
-(defn init []
-  (init "config.yaml"))
-(defn init [path]
-  (log/info "Loading config...")
-  (swap! app-state #(assoc % :config (yc/load-config {:path path :spec ::config})))
-  (log/info "Config loaded.")
-  
-  ;; Connect to DB
-  (swap! app-state connect-db)
-  
-  ;; Create collections
-  (swap! app-state #(assoc % :stores (auth-db/create-auth-stores (:db @app-state))))
+(defn disconnect-db [app-state]
+  (if (:db app-state)
+    (do
+      (mongo/disconnect (log/spy (:conn (:db app-state))))
+      (dissoc app-state :db))
+    (log/warn "Could not disconnect db.")))
 
-  (log/info "APP STATE " @app-state)
-  
-  ;; start authenticator
-  (f/attempt-all [config-path (-> @app-state :config :just-auth :email-config)
-                  config (yc/load-config {:path config-path
-                                          :spec ::email-conf})
-                  authenticator (auth/email-based-authentication
-                                 (:stores @app-state)
-                                 config
-                                 (-> @app-state :config :just-auth :throttling))]
-                 (swap! app-state  #(assoc % :authenticator authenticator))
-                 (f/if-failed [e]
-                              (log/error (str "Could start the authentication service: " (f/message e)))
-                              (System/exit 0)))
-  
+(defn exception->failjure
+  [e msg]
+  (f/fail (str msg ": " {:cause e})))
 
-  ;; Start connection to swapi
-  ;; TODO: think here, treat swapi as separate instance?
-)
+(defn init
+  ([]
+   (init "config.yaml"))
+  ([path]
+   (f/attempt-all [_ (log/info "Loading config...")
+                   config (yc/load-config {:path path
+                                           :spec ::config
+                                           :die-fn exception->failjure})
+                   _ (swap! app-state #(assoc % :config config))
+                   _ (log/info "Config loaded.")
+                   ;; Connect to DB
+                   _ (swap! app-state connect-db)
+                   ;; Create collections
+                   _ (swap! app-state #(assoc % :stores (auth-db/create-auth-stores
+                                                         (-> @app-state :db :db))))
+                   config-path (-> @app-state :config :just-auth :email-config)
+                   email-config (yc/load-config {:path (log/spy config-path)
+                                                 :spec ::email-conf
+                                                 :die-fn exception->failjure})
+                   ;; start authenticator
+                   authenticator (auth/email-based-authentication
+                                  (:stores @app-state)
+                                  email-config
+                                  (-> @app-state :config :just-auth :throttling))]
+                  (swap! app-state  #(assoc % :authenticator authenticator))
+                  (f/if-failed [e]
+                               (log/error (str "Could start the service: " (f/message e)))
+                               (swap! app-state disconnect-db))) 
+  
+   ;; Start connection to swapi
+   ;; TODO: think here, treat swapi as separate instance?
+   ))
+
