@@ -9,7 +9,7 @@ title="software by Dyne.org" class="pull-right"></a>
 
 [Getting started](#Getting-Started) | [Prerequisites](#Prerequisites) | [Running](#Running) | [Running the tests](#Running-the-tests) | [Deployment](#Deployment) | [Todos](#Todos) | [Acknowledgements](#Acknowledgements) | [License](#License) | [change log](https://github.com/dyne/social-wallet/blob/master/CHANGELOG.markdown) 
 
-[![Build Status](https://travis-ci.org/dyne/social-wallet.svg?branch=master)](https://travis-ci.org/dyne/social-wallet)
+[![Build Status](https://travis-ci.org/Commonfare-net/social-wallet.svg?branch=master)](https://travis-ci.org/Commonfare-net/social-wallet)
 [![Clojars Project](https://img.shields.io/clojars/v/social-wallet.svg)](https://clojars.org/social-wallet)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 
