@@ -17,13 +17,16 @@
 
 (ns social-wallet.ring
   (:require [taoensso.timbre :as log]
-            [clojure.spec.alpha :as spec]
+            
             [yummy.config :as yc]
+            
             [clj-storage.db.mongo :as mongo]
             [just-auth.db.just-auth :as auth-db]
             [just-auth.core :as auth]
+
             [failjure.core :as f]
-            [mount.core :refer [defstate]]
+
+            [clojure.spec.alpha :as spec]
             social-wallet.spec))
 
 (defonce app-state (atom {}))
@@ -52,6 +55,19 @@
   [e msg]
   (f/fail (str msg ": " {:cause e})))
 
+(defn init-logger [log-level]
+  (log/merge-config! {:level (keyword log-level)
+                      ;; #{:trace :debug :info :warn :error :fatal :report}
+
+                      ;; Control log filtering by
+                      ;; namespaces/patterns. Useful for turning off
+                      ;; logging in noisy libraries, etc.:
+                      :ns-whitelist  ["social-wallet.*"
+                                      "freecoin-lib.*"
+                                      "clj-storage.*"
+                                      "just-auth.*"]
+                      :ns-blacklist  ["org.eclipse.jetty.*"]}))
+
 (defn init
   ([]
    (init "config.yaml"))
@@ -61,12 +77,21 @@
                                            :spec ::config
                                            :die-fn exception->failjure})
                    _ (swap! app-state #(assoc % :config config))
-                   _ (log/info "Config loaded.")
+                   _ (log/info "Config loaded!")
+                   ;; Initialising logger
+                   _ (init-logger (or (:log-level config) "info"))
                    ;; Connect to DB
+                   _ (log/info "Connecting to DB...")
                    _ (swap! app-state connect-db)
+                   _ (log/info "Connected to DB!")
                    ;; Create collections
+                   _ (log/info "Creating collections...")
                    _ (swap! app-state #(assoc % :stores (auth-db/create-auth-stores
                                                          (-> @app-state :db :db))))
+                   _ (log/info "Collections created!")
+
+                   ;; Starting authenticator
+                   _ (log/info "Starting authenticator...")
                    config-path (-> @app-state :config :just-auth :email-config)
                    email-config (yc/load-config {:path (log/spy config-path)
                                                  :spec ::email-conf
@@ -75,13 +100,17 @@
                    authenticator (auth/email-based-authentication
                                   (:stores @app-state)
                                   email-config
-                                  (-> @app-state :config :just-auth :throttling))]
+                                  (-> @app-state :config :just-auth :throttling))
+                   _ (log/info "Collections created!")]
                   (swap! app-state  #(assoc % :authenticator authenticator))
+
+                  ;; Start connection to swapi
+                  ;; TODO: think here, treat swapi as separate instance?
+
+                  ;; ERROR HANDLING
                   (f/if-failed [e]
                                (log/error (str "Could start the service: " (f/message e)))
-                               (swap! app-state disconnect-db))) 
-  
-   ;; Start connection to swapi
-   ;; TODO: think here, treat swapi as separate instance?
-   ))
+                               (swap! app-state disconnect-db)))))
 
+(defn destroy []
+  (swap! app-state disconnect-db))

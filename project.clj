@@ -28,7 +28,8 @@
                  ;; ring middleware and defaults
                  [ring/ring-defaults "0.3.2"]
                  [ring-middleware-accept "2.0.3"]
-                 [ring-cors "0.1.12"]
+                 [ring-cors "0.1.13"]
+                 [ring/ring-jetty-adapter "1.7.1"]
 
                  ;; json
                  [cheshire "5.8.1"]
@@ -67,7 +68,8 @@
   :resource-paths ["resources"
                    "test-resources"]
   :ring    {:init social-wallet.ring/init
-            :handler social-wallet.handler/app}
+            :handler social-wallet.handler/app
+            :destroy social-wallet.ring/destroy}
 
   :profiles {:dev {:dependencies [[ring/ring-mock "0.3.2"]
                                    [midje "1.9.6"]
