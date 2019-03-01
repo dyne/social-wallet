@@ -22,10 +22,13 @@
             [social-wallet.handler :as handler]
             [ring.adapter.jetty :refer [run-jetty]]))
 
-(defn run-dev-server [port]
-  (log/info "Starting Jetty server...")
-  (run-jetty handler/app {:port port})
-  (log/info "Started server!"))
+(defn run-dev-server
+  ([]
+   (run-dev-server 3000))
+  ([port]
+   (log/info "Starting Jetty server...")
+   (run-jetty handler/app {:port port})
+   (log/info "Started server!")))
 
 (defn stop-dev-server [server]
   (log/info "Stopping Jetty server...")

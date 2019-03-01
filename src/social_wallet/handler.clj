@@ -31,13 +31,13 @@
 
             [taoensso.timbre :as log]))
 
-(defroutes app
+(defroutes app-routes
   (GET "/" [] "<h1>Welcome to the Social Wallet</h1>")
   (GET "/app-state" request
-       (web/render "lala"
+       (web/render 
         [:div
          [:h1 "App State"]
-         [:p (log/spy @r/app-state)]]))
+         [:p (clojure.pprint/pprint @r/app-state)]]))
   (GET "/login" request
        (web/render "an email"
                    [:div
@@ -45,3 +45,7 @@
                               (:email "an email"))]
                     [:h2 [:a {:href "/logout"} "Logout"]]]))
   (route/not-found "<h1>Page not found</h1>"))
+
+(def app
+  (-> app-routes
+      (wrap-defaults site-defaults)))
