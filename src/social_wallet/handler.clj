@@ -19,6 +19,7 @@
   (:require [ring.middleware.defaults :refer
              [wrap-defaults site-defaults]]
             [ring.middleware.cors :refer [wrap-cors]]
+            [ring.middleware.accept :refer [wrap-accept]]
 
             [compojure.core :refer [defroutes GET]]
             [compojure.route :as route]
@@ -34,10 +35,11 @@
 (defroutes app-routes
   (GET "/" [] "<h1>Welcome to the Social Wallet</h1>")
   (GET "/app-state" request
-       (web/render 
+       (web/render
+        [:p]
         [:div
-         [:h1 "App State"]
-         [:p (clojure.pprint/pprint @r/app-state)]]))
+         [:h1 "Config Keys loaded"]
+         [:ul (for [[x y] @r/app-state] [:li x])]]))
   (GET "/login" request
        (web/render "an email"
                    [:div
@@ -48,4 +50,11 @@
 
 (def app
   (-> app-routes
-      (wrap-defaults site-defaults)))
+      (wrap-defaults site-defaults)
+      (wrap-accept {:mime ["text/html"
+                           "text/plain"]
+                    ;; preference in language, fallback to english
+                    :language ["en" :qs 0.5
+                               "it" :qs 1
+                               "nl" :qs 1
+                               "hr" :qs 1]})))
