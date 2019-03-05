@@ -30,7 +30,8 @@
                  [ring-middleware-accept "2.0.3"]
                  [ring-cors "0.1.13"]
                  [ring/ring-jetty-adapter "1.7.1"]
-
+                 [ring/ring-session-timeout "0.2.0"]
+                 
                  ;; json
                  [cheshire "5.8.1"]
 

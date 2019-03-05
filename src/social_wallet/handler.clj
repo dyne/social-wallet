@@ -21,7 +21,7 @@
             [ring.middleware.cors :refer [wrap-cors]]
             [ring.middleware.accept :refer [wrap-accept]]
 
-            [compojure.core :refer [defroutes GET]]
+            [compojure.core :refer [defroutes GET POST]]
             [compojure.route :as route]
 
             [failjure.core :as f]
@@ -30,18 +30,43 @@
              [webpage :as web]
              [ring :as r]]
 
+            [just-auth.core :as auth]
+
             [taoensso.timbre :as log]))
 
 (defroutes app-routes
   (GET "/" [] "<h1>Welcome to the Social Wallet</h1>")
   (GET "/app-state" request
        (web/render
-        [:p]
         [:div
          [:h1 "Config Keys loaded"]
          [:ul (for [[x y] @r/app-state] [:li x])]]))
-  (GET "/login" request
-       (web/render "an email"
+  (GET "/login" {{:keys [user-id]} :session}
+       (if (and user-id (auth/get-account (-> @r/app-state :authenticator) user-id))
+         (web/render user-id
+                     [:div
+                      [:h1 (str "Already logged in with account: " user-id)]
+                      [:h2 [:a {:href "/logout"} "Logout"]]])
+         (web/render web/login-form)))
+  (POST "/login" {{:keys [username password]} :params}
+        (f/attempt-all
+         [username username
+          password password
+          logged (auth/sign-in  (-> @r/app-state :authenticator) username password {})]
+         ;; TODO: pass :ip-address in last argument map
+         (let [session {:session {:auth (log/spy :info logged)}}]
+           (conj session
+                 (web/render
+                  logged
+                  [:div
+                   [:h1 "Logged in: " username]
+                   (web/render-yaml session)])))
+         (f/when-failed [e]
+           (web/render-error-page
+            (str "Login failed: " (f/message e))))))
+  
+  #_(GET "/login" request
+       (web/render 
                    [:div
                     [:h1 (str "Already logged in with account: "
                               (:email "an email"))]
