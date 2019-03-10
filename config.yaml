@@ -1,6 +1,9 @@
+log-level: debug
+
 webserver:
-  anti-forgery: false
-  ssl-redirect: false
+  security:
+      anti-forgery: false
+      ssl-redirect: false
 
 just-auth:
   email-config: "email-conf.yaml"

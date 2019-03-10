@@ -22,6 +22,7 @@
 (spec/def ::mongo-config (spec/keys :req-un [::host ::port ::db]))
 (spec/def ::throttling (spec/keys :req-un [::criteria ::type ::time-window-secs ::threshold]))
 (spec/def ::just-auth (spec/keys :req-un [::email-config ::mongo-config ::throttling]))
-(spec/def ::webserver (spec/keys :req-un [::anti-forgery ::ssl-redirect]))
+(spec/def ::security (spec/keys :req-un [::anti-forgery ::ssl-redirect]))
+(spec/def ::webserver (spec/keys :req-un [::security]))
 (spec/def :social-wallet.ring/config (spec/keys :req-un [::webserver ::just-auth ::swapi]))
 (spec/def :social-wallet.ring/email-conf (spec/keys :req-un [::email-server ::email-user ::email-pass ::email-address ::email-admin]))
