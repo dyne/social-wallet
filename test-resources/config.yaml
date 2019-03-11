@@ -1,6 +1,7 @@
 webserver:
-  anti-forgery: false
-  ssl-redirect: false
+  security:
+    anti-forgery: false
+    ssl-redirect: false
 
 just-auth:
   email-config: "test-resources/email-conf.yaml"

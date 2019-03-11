@@ -15,11 +15,11 @@
 
 ;; If you modify this Program, or any covered work, by linking or combining it with any library (or a modified version of that library), containing parts covered by the terms of EPL v 1.0, the licensors of this Program grant you additional permission to convey the resulting work. Your modified version must prominently offer all users interacting with it remotely through a computer network (if your version supports such interaction) an opportunity to receive the Corresponding Source of your version by providing access to the Corresponding Source from a network server at no charge, through some standard or customary means of facilitating copying of software. Corresponding Source for a non-source form of such a combination shall include the source code for the parts of the libraries (dependencies) covered by the terms of EPL v 1.0 used as well as that of the covered work.
 
-(ns social-wallet.test.ring
+(ns social-wallet.test.core
   (:require [midje.sweet :refer :all]
             [ring.mock.request :as mock]
             [social-wallet
-             [ring :as r]
+             [core :as sc]
              [handler :as h]]
             [taoensso.timbre :as log]
             [cheshire.core :as cheshire]))
@@ -32,12 +32,12 @@
 (defn parse-body [body]
   (cheshire/parse-string (slurp body) true))
 
-(against-background [(before :contents (r/init "test-resources/config.yaml"))
+(against-background [(before :contents (sc/init "test-resources/config.yaml"))
                      #_(after :contents (h/destroy))]
 
                     (facts "Check that the app state is loaded properly"
                            (fact "check that the email throtling config is properly read"
-                                 (-> @r/app-state :config :just-auth :throttling)
+                                 (-> @h/app-state :config :just-auth :throttling)
                                  => {:criteria #{:email, :ip-address} 
                                      :type :block
                                      :time-window-secs 3600
@@ -45,8 +45,6 @@
                     (facts "Some basic requests work properly"
                            (fact "Home page requests succeeds and returns correct text"
                                  (let [text "<h1>Welcome to the Social Wallet</h1>"
-                                       response (h/app
-                                                 (->
-                                                  (mock/request :get "/")))]
+                                       response (h/app-routes (mock/request :get "/"))]
                                    (:status response) => 200
                                    (:body response) => text))))
