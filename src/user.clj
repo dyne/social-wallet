@@ -18,11 +18,11 @@
 (ns user
   (:require [taoensso.timbre :as log]
             
-            [social-wallet.ring :as ring]
+            #_[social-wallet.ring :as ring]
             [social-wallet.handler :as handler]
-            [ring.adapter.jetty :refer [run-jetty]]))
+            #_[ring.adapter.jetty :refer [run-jetty]]))
 
-(defn run-dev-server
+#_(defn run-dev-server
   ([]
    (run-dev-server 3000))
   ([port]
@@ -30,15 +30,15 @@
    (run-jetty handler/app {:port port})
    (log/info "Started server!")))
 
-(defn stop-dev-server [server]
+#_(defn stop-dev-server [server]
   (log/info "Stopping Jetty server...")
   (.stop server)
   (log/info "Stopped server!"))
 
-(defn start-dev [port]
+#_(defn start-dev [port]
   (ring/init)
   (run-dev-server port))
 
-(defn stop-dev []
+#_(defn stop-dev []
   ;; TODO: Repl hanging when starting jetty-server cause it is synchronous. How to stop?
   (ring/destroy))

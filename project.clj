@@ -26,10 +26,10 @@
                  ;; HTTP server abstraction
                  [ring/ring-core "1.7.1"]
                  ;; ring middleware and defaults
+                 [ring/ring-devel "1.7.1"]
                  [ring/ring-defaults "0.3.2"]
                  [ring-middleware-accept "2.0.3"]
                  [ring-cors "0.1.13"]
-                 [ring/ring-jetty-adapter "1.7.1"]
                  [ring/ring-session-timeout "0.2.0"]
                  
                  ;; json
@@ -52,11 +52,11 @@
 
                  ;; State management
                  [mount "0.1.16"]
-                 
+
+                 ;; HTTP server
+                 [http-kit "2.3.0"] 
                  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Dyne libs
                  ;;
-                 ;; Common auxiliary function such as config reader
-                 [org.clojars.dyne/auxiliary "0.5.0-SNAPSHOT"]
                  ;; storage lib
                  [org.clojars.dyne/clj-storage "0.9.0"]
                  ;; authentication library
@@ -68,13 +68,10 @@
   :source-paths ["src"]
   :resource-paths ["resources"
                    "test-resources"]
-  :ring    {:init social-wallet.ring/init
-            :handler social-wallet.handler/app
-            :destroy social-wallet.ring/destroy}
+  :main social-wallet.core
 
   :profiles {:dev {:dependencies [[ring/ring-mock "0.3.2"]
                                    [midje "1.9.6"]
                                    [javax.servlet/servlet-api "2.5"]]
-                    :plugins [[lein-ring "0.12.0"]
-                              [lein-midje "3.1.3"]]}}
+                    :plugins [[lein-midje "3.1.3"]]}}
   )

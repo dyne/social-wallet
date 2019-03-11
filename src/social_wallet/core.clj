@@ -15,8 +15,18 @@
 
 ;; If you modify this Program, or any covered work, by linking or combining it with any library (or a modified version of that library), containing parts covered by the terms of EPL v 1.0, the licensors of this Program grant you additional permission to convey the resulting work. Your modified version must prominently offer all users interacting with it remotely through a computer network (if your version supports such interaction) an opportunity to receive the Corresponding Source of your version by providing access to the Corresponding Source from a network server at no charge, through some standard or customary means of facilitating copying of software. Corresponding Source for a non-source form of such a combination shall include the source code for the parts of the libraries (dependencies) covered by the terms of EPL v 1.0 used as well as that of the covered work.
 
-(ns social-wallet.ring
+(ns social-wallet.core
   (:require [taoensso.timbre :as log]
+
+            [social-wallet.handler :as h]
+
+            [org.httpkit.server :refer [run-server]]
+            [compojure.handler :refer [site]]
+
+            [ring.middleware.reload :as reload]
+            [ring.middleware.defaults :refer
+             [wrap-defaults site-defaults]]
+            [ring.middleware.accept :refer [wrap-accept]]
             
             [yummy.config :as yc]
             
@@ -27,9 +37,10 @@
             [failjure.core :as f]
 
             [clojure.spec.alpha :as spec]
-            social-wallet.spec))
+            social-wallet.spec)
+  (:gen-class))
 
-(defonce app-state (atom {}))
+(defonce server (atom nil))
 
 (defn conf->mongo-uri [mongo-conf]
   (str "mongodb://" (:host mongo-conf) ":" (:port mongo-conf) "/" (:db mongo-conf)))
@@ -47,7 +58,7 @@
 (defn disconnect-db [app-state]
   (if (:db app-state)
     (do
-      (mongo/disconnect (log/spy (:conn (:db app-state))))
+      (mongo/disconnect (:conn (:db app-state)))
       (dissoc app-state :db))
     (log/warn "Could not disconnect db.")))
 
@@ -76,33 +87,33 @@
                    config (yc/load-config {:path path
                                            :spec ::config
                                            :die-fn exception->failjure})
-                   _ (swap! app-state #(assoc % :config config))
+                   _ (swap! h/app-state #(assoc % :config config))
                    _ (log/info "Config loaded!")
                    ;; Initialising logger
                    _ (init-logger (or (:log-level config) "info"))
                    ;; Connect to DB
                    _ (log/info "Connecting to DB...")
-                   _ (swap! app-state connect-db)
+                   _ (swap! h/app-state connect-db)
                    _ (log/info "Connected to DB!")
                    ;; Create collections
                    _ (log/info "Creating collections...")
-                   _ (swap! app-state #(assoc % :stores (auth-db/create-auth-stores
-                                                         (-> @app-state :db :db))))
+                   _ (swap! h/app-state #(assoc % :stores (auth-db/create-auth-stores
+                                                         (-> @h/app-state :db :db))))
                    _ (log/info "Collections created!")
 
                    ;; Starting authenticator
                    _ (log/info "Starting authenticator...")
-                   config-path (-> @app-state :config :just-auth :email-config)
-                   email-config (yc/load-config {:path (log/spy config-path)
+                   config-path (-> @h/app-state :config :just-auth :email-config)
+                   email-config (yc/load-config {:path config-path
                                                  :spec ::email-conf
                                                  :die-fn exception->failjure})
                    ;; start authenticator
                    authenticator (auth/email-based-authentication
-                                  (:stores @app-state)
+                                  (:stores @h/app-state)
                                   email-config
-                                  (-> @app-state :config :just-auth :throttling))
+                                  (-> @h/app-state :config :just-auth :throttling))
                    _ (log/info "Collections created!")]
-                  (swap! app-state  #(assoc % :authenticator authenticator))
+                  (swap! h/app-state  #(assoc % :authenticator authenticator))
 
                   ;; Start connection to swapi
                   ;; TODO: think here, treat swapi as separate instance?
@@ -110,7 +121,50 @@
                   ;; ERROR HANDLING
                   (f/if-failed [e]
                                (log/error (str "Could start the service: " (f/message e)))
-                               (swap! app-state disconnect-db)))))
+                               (swap! h/app-state disconnect-db)))))
 
 (defn destroy []
-  (swap! app-state disconnect-db))
+  (swap! h/app-state disconnect-db))
+
+
+(defn stop-server []
+  (when-not (nil? @server)
+    ;; graceful shutdown: wait 100ms for existing requests to be finished
+    ;; :timeout is optional, when no timeout, stop immediately
+    (@server :timeout 100)
+    (reset! server nil)))
+
+(defn in-dev? []
+  ;; TODO:
+  true) 
+
+(defn- deep-merge [a b]
+  (merge-with (fn [x y]
+                (cond (map? y) (deep-merge x y) 
+                      (vector? y) (concat x y) 
+                      :else y)) 
+              a b))
+
+(defn wrap-with-middleware [handler]
+  (-> handler
+      (wrap-defaults (deep-merge site-defaults
+                                 (-> @h/app-state :config :webserver)))
+      (wrap-accept {:mime ["text/html"
+                           "text/plain"]
+                    ;; preference in language, fallback to english
+                    :language ["en" :qs 0.5
+                               "it" :qs 1
+                               "nl" :qs 1
+                               "hr" :qs 1]})))
+
+(defn -main [& args]
+  ;; The #' is useful when you want to hot-reload code
+  ;; You may want to take a look: https://github.com/clojure/tools.namespace
+  ;; and http://http-kit.org/migration.html#reload
+
+  (init)
+  (f/if-let-ok? [handler (if (in-dev?)
+                  (reload/wrap-reload (wrap-with-middleware #'h/app-routes)) ;; only reload when dev
+                  (wrap-with-middleware h/app-routes))]
+    (reset! server (run-server handler {:port 3000}))
+    (print "Could not start server.")))

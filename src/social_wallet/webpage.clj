@@ -20,7 +20,6 @@
             [cheshire.core :as json]
             [clojure.data.csv :as csv]
             [yaml.core :as yaml]
-            [auxiliary.config :as conf]
             [taoensso.timbre :as log]
             [hiccup.page :as page]
             [hiccup.form :as hf]))
@@ -70,7 +69,7 @@
 
 (defn reload-session [request]
   ;; TODO: validation of all data loaded via prismatic schema
-  (conf/load-config "social-wallet" conf/default-settings)
+  #_(conf/load-config "social-wallet" conf/default-settings)
 
   )
 
