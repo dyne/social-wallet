@@ -27,6 +27,7 @@
             [ring.middleware.defaults :refer
              [wrap-defaults site-defaults]]
             [ring.middleware.accept :refer [wrap-accept]]
+            [ring.logger :as rl]
             
             [yummy.config :as yc]
             
@@ -37,8 +38,11 @@
             [failjure.core :as f]
 
             [clojure.spec.alpha :as spec]
+
+            [social-wallet.util :refer [deep-merge]]
             social-wallet.spec)
-  (:gen-class))
+  ;; TODO needed for jar
+  #_(:gen-class))
 
 (defonce server (atom nil))
 
@@ -79,6 +83,34 @@
                                       "just-auth.*"]
                       :ns-blacklist  ["org.eclipse.jetty.*"]}))
 
+
+(defn my-wrap-accept [handler {:keys [mime language]}]
+  (fn [request]
+    (-> request
+        (assoc-in [:accept :mime] mime)
+        (assoc-in [:accept :language] language)
+        handler)))
+
+(defn wrap-with-middleware [handler]
+  (-> handler
+      (my-wrap-accept {:mime ["text/html"
+                              "text/plain"
+                              "text/css"]
+                       ;; preference in language, fallback to english
+                       :language ["en" :qs 0.5
+                                  "it" :qs 1
+                                  "nl" :qs 1
+                                  "hr" :qs 1]})
+      (wrap-defaults (log/spy (deep-merge site-defaults
+                                          (-> @h/app-state :config :webserver))))
+
+      ;; TODO: make this an option
+      #_rl/wrap-with-logger))
+
+(def app-handler
+  (wrap-with-middleware h/app-routes))
+
+
 (defn init
   ([]
    (init "config.yaml"))
@@ -113,7 +145,10 @@
                                   email-config
                                   (-> @h/app-state :config :just-auth :throttling))
                    _ (log/info "Collections created!")]
-                  (swap! h/app-state  #(assoc % :authenticator authenticator))
+                  (do
+                    (swap! h/app-state  #(assoc % :authenticator authenticator))
+                    ;; Reload the whole app
+                    (log/spy (reload/wrap-reload #'app-handler)))
 
                   ;; Start connection to swapi
                   ;; TODO: think here, treat swapi as separate instance?
@@ -138,25 +173,6 @@
   ;; TODO:
   true) 
 
-(defn- deep-merge [a b]
-  (merge-with (fn [x y]
-                (cond (map? y) (deep-merge x y) 
-                      (vector? y) (concat x y) 
-                      :else y)) 
-              a b))
-
-(defn wrap-with-middleware [handler]
-  (-> handler
-      (wrap-defaults (deep-merge site-defaults
-                                 (-> @h/app-state :config :webserver)))
-      (wrap-accept {:mime ["text/html"
-                           "text/plain"]
-                    ;; preference in language, fallback to english
-                    :language ["en" :qs 0.5
-                               "it" :qs 1
-                               "nl" :qs 1
-                               "hr" :qs 1]})))
-
 (defn -main [& args]
   ;; The #' is useful when you want to hot-reload code
   ;; You may want to take a look: https://github.com/clojure/tools.namespace
@@ -164,7 +180,7 @@
 
   (init)
   (f/if-let-ok? [handler (if (in-dev?)
-                  (reload/wrap-reload (wrap-with-middleware #'h/app-routes)) ;; only reload when dev
-                  (wrap-with-middleware h/app-routes))]
+                           (log/spy (reload/wrap-reload (wrap-with-middleware #'h/app-routes))) ;; only reload when dev
+                           (log/spy (wrap-with-middleware h/app-routes)))]
     (reset! server (run-server handler {:port 3000}))
     (print "Could not start server.")))

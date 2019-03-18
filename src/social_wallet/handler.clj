@@ -30,13 +30,16 @@
 (defonce app-state (atom {}))
 
 (defroutes app-routes
-  (GET "/" [] "<h1>Welcome to the Social Wallet</h1>")
+  (GET "/" request (str "<h1>Welcome to the Social Wallet</h1>\n"
+                          "<p>" request "</p>"))
   (GET "/app-state" request
        (web/render
         [:div
          [:h1 "Config Keys loaded"]
          [:ul (for [[x y] @app-state] [:li x])]]))
-  (GET "/login" {{:keys [user-id]} :session}
+  (GET "/login" {{:keys [user-id]} :session
+                 {:keys [mime language]} :accept}
+       (log/debug "MIME " mime "\n LAGUAGE " language)
        (if (and user-id (auth/get-account (-> @app-state :authenticator) user-id))
          (web/render user-id
                      [:div
@@ -59,4 +62,5 @@
          (f/when-failed [e]
            (web/render-error-page
             (str "Login failed: " (f/message e))))))
+  (route/resources "/")
   (route/not-found "<h1>Page not found</h1>"))
