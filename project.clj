@@ -24,13 +24,15 @@
                  [compojure "1.6.1"]
                  
                  ;; HTTP server abstraction
-                 [ring/ring-core "1.7.1"]
+                 [ring/ring-core "1.7.1" :exclusions [ring/ring-codec]]
                  ;; ring middleware and defaults
-                 [ring/ring-devel "1.7.1"]
+                 [ring/ring-devel "1.7.1" :exclusions [ring/ring-codec
+                                                       commons-codec]]
                  [ring/ring-defaults "0.3.2"]
                  [ring-middleware-accept "2.0.3"]
                  [ring-cors "0.1.13"]
                  [ring/ring-session-timeout "0.2.0"]
+                 [ring-logger "1.0.1"]
                  
                  ;; json
                  [cheshire "5.8.1"]
@@ -58,20 +60,29 @@
                  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Dyne libs
                  ;;
                  ;; storage lib
-                 [org.clojars.dyne/clj-storage "0.9.0"]
+                 [org.clojars.dyne/clj-storage "0.9.0" :exclusions [com.taoensso/encore
+                                                                    org.clojure/tools.reader]]
                  ;; authentication library
-                 [org.clojars.dyne/just-auth "0.5.0-SNAPSHOT"]]
+                 [org.clojars.dyne/just-auth "0.5.0-SNAPSHOT" :exclusions [com.taoensso/encore
+                                                                           org.clojure/tools.reader]]]
 
 
-  :pendatic? :warn
+  :pedantic? :warn
   :aliases {"test" "midje"}
   :source-paths ["src"]
   :resource-paths ["resources"
                    "test-resources"]
   :main social-wallet.core
 
+  ;; When using the lein ring server the ring defaults are not merged properly with the config
+  ;; This is because the handler is resolved before the init (def)
+  :ring    {:init social-wallet.core/init
+            :handler social-wallet.core/app-handler
+            :destroy social-wallet.core/destroy}
+  
   :profiles {:dev {:dependencies [[ring/ring-mock "0.3.2"]
-                                   [midje "1.9.6"]
+                                  [midje "1.9.6" :exclusions [io.aviso/pretty commons-codec clj-time]]
                                    [javax.servlet/servlet-api "2.5"]]
-                    :plugins [[lein-midje "3.1.3"]]}}
+                   :plugins [[lein-midje "3.1.3"]
+                             [lein-ring "0.12.0"]]}}
   )
