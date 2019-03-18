@@ -44,7 +44,6 @@
                                      :threshold 1000}))
                     (facts "Some basic requests work properly"
                            (fact "Home page requests succeeds and returns correct text"
-                                 (let [text "<h1>Welcome to the Social Wallet</h1>"
-                                       response (h/app-routes (mock/request :get "/"))]
+                                 (let [response (h/app-routes (mock/request :get "/"))]
                                    (:status response) => 200
-                                   (:body response) => text))))
+                                   (:body response) => h/welcome-html))))

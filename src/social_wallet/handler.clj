@@ -29,9 +29,11 @@
 
 (defonce app-state (atom {}))
 
+(def welcome-html (str "<h1>Welcome to the Social Wallet</h1>\n"
+                          "<p>" #_request "</p>"))
+
 (defroutes app-routes
-  (GET "/" request (str "<h1>Welcome to the Social Wallet</h1>\n"
-                          "<p>" request "</p>"))
+  (GET "/" request welcome-html)
   (GET "/app-state" request
        (web/render
         [:div
