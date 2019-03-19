@@ -113,8 +113,9 @@
 
 (defn init
   ([]
-   (init "config.yaml"))
-  ([path]
+   (init "config.yaml" false))
+  ([path auth-admin]
+   "The path for the config file and a flag for whether it is an admin only signup system or not."
    (f/attempt-all [_ (log/info "Loading config...")
                    config (yc/load-config {:path path
                                            :spec ::config
@@ -137,7 +138,7 @@
                    _ (log/info "Starting authenticator...")
                    config-path (-> @h/app-state :config :just-auth :email-config)
                    email-config (yc/load-config {:path config-path
-                                                 :spec ::email-conf
+                                                 :spec (if auth-admin ::email-conf-admin ::email-conf)
                                                  :die-fn exception->failjure})
                    ;; start authenticator
                    authenticator (auth/email-based-authentication
