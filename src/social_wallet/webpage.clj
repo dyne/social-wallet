@@ -334,6 +334,6 @@
               :placeholder "Repeat password"
               :class "form-control"
               :style "margin-top: 1em"}]
-     [:input {:type "submit" :value "Sign In"
+     [:input {:type "submit" :value "Sign Up"
               :class "btn btn-primary btn-lg btn-block"
               :style "margin-top: 1em"}]]]])
