@@ -114,6 +114,8 @@
 (defn init
   ([]
    (init "config.yaml" false))
+  ([path]
+   (init path false))
   ([path auth-admin]
    "The path for the config file and a flag for whether it is an admin only signup system or not."
    (f/attempt-all [_ (log/info "Loading config...")
