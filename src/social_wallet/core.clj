@@ -157,7 +157,8 @@
                   ;; ERROR HANDLING
                   (f/if-failed [e]
                                (log/error (str "Could start the service: " (f/message e)))
-                               (swap! h/app-state disconnect-db)))))
+                               (swap! h/app-state disconnect-db)
+                               (f/fail (f/message e))))))
 
 (defn destroy []
   (swap! h/app-state disconnect-db))
@@ -179,9 +180,10 @@
   ;; You may want to take a look: https://github.com/clojure/tools.namespace
   ;; and http://http-kit.org/migration.html#reload
 
-  (init)
-  (f/if-let-ok? [handler (if (in-dev?)
-                           (log/spy (reload/wrap-reload (wrap-with-middleware #'h/app-routes))) ;; only reload when dev
-                           (log/spy (wrap-with-middleware h/app-routes)))]
-    (reset! server (run-server handler {:port 3000}))
-    (print "Could not start server.")))
+  (f/attempt-all [app-state (init)
+                  handler (if (in-dev?)
+                            (log/spy (reload/wrap-reload (wrap-with-middleware #'h/app-routes))) ;; only reload when dev
+                            (log/spy app-handler))]
+                 (reset! server (run-server handler {:port 3000}))
+                 (f/if-failed [e]
+                              (print "Could not start server: " (f/message e)))))
