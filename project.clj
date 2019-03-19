@@ -74,6 +74,13 @@
                    "test-resources"]
   :main social-wallet.core
 
+  :env [
+
+        ;; translation is configured here, strings are hard-coded at compile time
+        ;; the last one acts as fallback if translated strings are not found
+        [:auth-translation-language "lang/auth-en.yml"]
+        [:auth-translation-fallback "lang/auth-en.yml"]]
+
   ;; When using the lein ring server the ring defaults are not merged properly with the config
   ;; This is because the handler is resolved before the init (def)
   :ring    {:init social-wallet.core/init
