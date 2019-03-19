@@ -64,5 +64,56 @@
          (f/when-failed [e]
            (web/render-error-page
             (str "Login failed: " (f/message e))))))
+  (GET "/signup" request
+       (web/render web/signup-form))
+  (POST "/signup" request
+        (f/attempt-all
+         [name (-> request :params :name)
+          email (-> request :params :email)
+          password (-> request :params :password)
+          repeat-password (-> request :params :repeat-password)
+          activation {:activation-uri
+                      (get-in request [:headers "host"])}]
+         (web/render
+          (if (= password repeat-password)
+            (f/try*
+             (f/if-let-ok?
+                 [signup (auth/sign-up (-> @app-state :authenticator)
+                                       name
+                                       email
+                                       password
+                                       activation
+                                       [])]
+               [:div
+                [:h2 (str "Account created: "
+                          name " &lt;" email "&gt;")]
+                [:h3 "Account pending activation."]]
+               (web/render-error
+                (str "Failure creating account: "
+                     (f/message signup)))))
+            (web/render-error
+             "Repeat password didnt match")))
+         (f/when-failed [e]
+           (web/render-error-page
+            (str "Sign-up failure: " (f/message e))))))
+  (GET "/activate/:email/:activation-id"
+       [email activation-id :as request]
+       (let [activation-uri
+             (str "http://"
+                  (get-in request [:headers "host"])
+                  "/activate/" email "/" activation-id)]
+         (web/render
+          [:div
+           (f/if-let-failed?
+               [act (auth/activate-account
+                     (-> @app-state :authenticator)
+                     email
+                     {:activation-link activation-uri})]
+             (web/render-error
+              [:div
+               [:h1 "Failure activating account"]
+               [:h2 (f/message act)]
+               [:p (str "Email: " email " activation-id: " activation-id)]])
+             [:h1 (str "Account activated - " email)])])))
   (route/resources "/")
   (route/not-found "<h1>Page not found</h1>"))
