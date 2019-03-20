@@ -118,7 +118,11 @@
    (init path false))
   ([path auth-admin]
    "The path for the config file and a flag for whether it is an admin only signup system or not."
-   (f/attempt-all [_ (log/info "Loading config...")
+   (f/attempt-all [_ (log/info "Loading translations...")
+                   _ (auxiliary.translation/init "lang/auth-en.yml"
+                                                 "lang/english.yaml")
+                   _ (log/info "Translations loaded!")
+                   _ (log/info "Loading config...")
                    config (yc/load-config {:path path
                                            :spec ::config
                                            :die-fn exception->failjure})
@@ -151,7 +155,7 @@
                   (do
                     (swap! h/app-state  #(assoc % :authenticator authenticator))
                     ;; Reload the whole app
-                    (log/spy (reload/wrap-reload #'app-handler)))
+                    (reload/wrap-reload #'app-handler))
 
                   ;; Start connection to swapi
                   ;; TODO: think here, treat swapi as separate instance?

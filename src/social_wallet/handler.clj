@@ -33,7 +33,8 @@
                           "<p>" #_request "</p>"))
 
 (defroutes app-routes
-  (GET "/" request welcome-html)
+  (GET "/" request
+       (web/render welcome-html))
   (GET "/app-state" request
        (web/render
         [:div
@@ -41,26 +42,21 @@
          [:ul (for [[x y] @app-state] [:li x])]]))
   (GET "/login" {{:keys [user-id]} :session
                  {:keys [mime language]} :accept}
-       (log/debug "MIME " mime "\n LAGUAGE " language)
-       (if (and user-id (auth/get-account (-> @app-state :authenticator) user-id))
+       (if (and (log/spy user-id) (auth/get-account (-> @app-state :authenticator) user-id))
          (web/render user-id
                      [:div
                       [:h1 (str "Already logged in with account: " user-id)]
                       [:h2 [:a {:href "/logout"} "Logout"]]])
          (web/render web/login-form)))
-  (POST "/login" {{:keys [username password]} :params}
+  (POST "/login" request
         (f/attempt-all
-         [username username
-          password password
-          logged (auth/sign-in  (-> @app-state :authenticator) username password {})]
+         [username (-> request :params :username)
+          password (-> request :params :password)
+          account (auth/sign-in (-> @app-state :authenticator) username password {})]
          ;; TODO: pass :ip-address in last argument map
-         (let [session {:session {:auth (log/spy :info logged)}}]
+         (let [session {:session {:auth (log/spy :info account)}}]
            (conj session
-                 (web/render
-                  logged
-                  [:div
-                   [:h1 "Logged in: " username]
-                   (web/render-yaml session)])))
+                 (web/render-wallet account (get-in request  [:headers "host"]))))
          (f/when-failed [e]
            (web/render-error-page
             (str "Login failed: " (f/message e))))))
@@ -115,5 +111,12 @@
                [:h2 (f/message act)]
                [:p (str "Email: " email " activation-id: " activation-id)]])
              [:h1 (str "Account activated - " email)])])))
+  #_(GET "/qrcode/:email" 
+       (log/spy (qrcode/transact-to email host)))
+  (GET "/session" request
+       (-> (:session request) web/render-yaml web/render))
+  (GET "/logout" request
+       (conj {:session nil}
+             (web/render [:h1 "Logged out."])))
   (route/resources "/")
   (route/not-found "<h1>Page not found</h1>"))

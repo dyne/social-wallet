@@ -56,7 +56,14 @@
                  [mount "0.1.16"]
 
                  ;; HTTP server
-                 [http-kit "2.3.0"] 
+                 [http-kit "2.3.0"]
+
+                 ;; Gravatar
+                 [clavatar "0.2.1"]
+
+                 ;; QRcode
+                 [clj.qrgen "0.4.0"]
+                 
                  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Dyne libs
                  ;;
                  ;; storage lib
@@ -79,7 +86,8 @@
         ;; translation is configured here, strings are hard-coded at compile time
         ;; the last one acts as fallback if translated strings are not found
         [:auth-translation-language "lang/auth-en.yml"]
-        [:auth-translation-fallback "lang/auth-en.yml"]]
+        [:auth-translation-fallback "lang/auth-en.yml"]
+        [:wallet-translation-language "lang/english.yaml"]]
 
   ;; When using the lein ring server the ring defaults are not merged properly with the config
   ;; This is because the handler is resolved before the init (def)

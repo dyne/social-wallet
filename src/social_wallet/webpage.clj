@@ -22,7 +22,9 @@
             [yaml.core :as yaml]
             [taoensso.timbre :as log]
             [hiccup.page :as page]
-            [hiccup.form :as hf]))
+            [hiccup.form :as hf]
+            [social-wallet.qrcode :as qrcode]
+            [clavatar.core :as clavatar]))
 
 (declare render)
 (declare render-head)
@@ -124,6 +126,7 @@
        "https://social-wallet.dyne.org")) ;; default desc
 
   ([title desc url]
+   (log/info "RENDERING HEAD")
    [:head [:meta {:charset "utf-8"}]
     [:meta {:http-equiv "X-UA-Compatible" :content "IE=edge,chrome=1"}]
     [:meta
@@ -168,6 +171,8 @@
       [:li {:class "nav-item"}
        [:a {:class "nav-link far fa-address-card"
             :href "/login"} " Login"]]
+      [:li [:a {:class "nav-link far fa-address-card"
+                 :href "/signup"} " Sign-up"]]
       ]]])
 
 (def navbar-account
@@ -205,7 +210,10 @@
       [:li {:role "separator" :class "divider"} ]
       [:li {:class "nav-item"}
        [:a {:class "nav-link far fa-file-code"
-            :href "/config"} " Configuration"]]
+            :href "/app-state"} " Configuration"]]
+      [:li {:class "nav-item"}
+       [:a {:class "nav-link far fa-file-code"
+            :href "/logout"} "Log out"]]
       ]]])
 
 (defn render-footer []
@@ -250,6 +258,27 @@
    [:pre [:code {:class "yaml"}
           (yaml/generate-string data)]]
    [:script "hljs.initHighlightingOnLoad();"]])
+
+(defn render-wallet [account host]
+  (let [email (:email account)]
+    {:headers {"Content-Type"
+               "text/html; charset=utf-8"}
+     :body (page/html5
+            (render-head)
+            [:body ;; {:class "static"}
+             navbar-account
+             [:div {:class "wallet-details"}
+              [:div {:class "card"}
+               [:span (str (t/locale [:wallet :name]) ": " (:name account))]
+               [:br]
+               [:span (str (t/locale [:wallet :email]) ": ") [:a {:href (str "mailto:" email)} email]]
+               [:br]
+               [:span {:class "qrcode pull-left"}
+                [:img {:src (log/spy (qrcode/transact-to email host))}]]
+               [:span {:class "gravatar pull-right"}
+                [:img {:src (clavatar/gravatar email :size 87 :default :mm)}]]
+               [:div {:class "clearfix"}]]]
+             (render-footer)])}))
 
 (defn highlight-yaml
   "renders a yaml text in highlighted html"
