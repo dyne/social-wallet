@@ -21,8 +21,12 @@
             [clojure.data.csv :as csv]
             [yaml.core :as yaml]
             [taoensso.timbre :as log]
+            
             [hiccup.page :as page]
             [hiccup.form :as hf]
+            [hiccup.element :as el]
+            [hiccup.util :as hu]
+            
             [social-wallet.qrcode :as qrcode]
             [clavatar.core :as clavatar]))
 
@@ -274,7 +278,7 @@
                [:span (str (t/locale [:wallet :email]) ": ") [:a {:href (str "mailto:" email)} email]]
                [:br]
                [:span {:class "qrcode pull-left"}
-                [:img {:src (log/spy (qrcode/transact-to email host))}]]
+                [:img {:src (hu/url  "/qrcode/" email)}]]
                [:span {:class "gravatar pull-right"}
                 [:img {:src (clavatar/gravatar email :size 87 :default :mm)}]]
                [:div {:class "clearfix"}]]]

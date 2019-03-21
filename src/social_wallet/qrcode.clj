@@ -20,5 +20,6 @@
             [clj.qrgen :as qr]))
 
 (defn transact-to [email base-url]
-  (log/spy (qr/from (str base-url "/send/to/" email)
-                    :charset "ISO-8859-1")))
+  (qr/as-input-stream
+   (qr/from (str base-url "/send/to/" email)
+            :charset "ISO-8859-1")))
