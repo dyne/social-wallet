@@ -22,6 +22,7 @@
             [failjure.core :as f]
 
             [social-wallet.webpage :as web]
+            [social-wallet.qrcode :as qrcode]
 
             [just-auth.core :as auth]
 

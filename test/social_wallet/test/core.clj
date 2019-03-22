@@ -20,9 +20,13 @@
             [ring.mock.request :as mock]
             [social-wallet
              [core :as sc]
-             [handler :as h]]
+             [handler :as h]
+             [webpage :as web]]
             [taoensso.timbre :as log]
-            [cheshire.core :as cheshire]))
+            [cheshire.core :as cheshire]
+            
+            [hickory.core :as hick]
+            [hickory.select :as hick-s]))
 
 (def test-app-name "social-wallet-api-test")
 
@@ -46,4 +50,12 @@
                            (fact "Home page requests succeeds and returns correct text"
                                  (let [response (h/app-routes (mock/request :get "/"))]
                                    (:status response) => 200
-                                   (:body response) => h/welcome-html))))
+                                   (-> response
+                                       :body
+                                       hick/parse
+                                       hick/as-hickory
+                                       (as-> parsed (hick-s/select (hick-s/tag "h1") parsed))
+                                       log/spy
+                                       first
+                                       :content
+                                       first) => "Welcome to the Social Wallet"))))

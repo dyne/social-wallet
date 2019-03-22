@@ -27,8 +27,9 @@
             [hiccup.element :as el]
             [hiccup.util :as hu]
             
-            [social-wallet.qrcode :as qrcode]
-            [clavatar.core :as clavatar]))
+            [clavatar.core :as clavatar]
+
+            [auxiliary.translation :as t]))
 
 (declare render)
 (declare render-head)
