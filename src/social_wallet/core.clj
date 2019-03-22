@@ -190,6 +190,6 @@
                   handler (if (in-dev?)
                             (log/spy (reload/wrap-reload (wrap-with-middleware #'h/app-routes))) ;; only reload when dev
                             (log/spy app-handler))]
-                 (reset! server (run-server handler {:port 3000}))
+                 (reset! server (run-server handler {:port 3001}))
                  (f/if-failed [e]
                               (print "Could not start server: " (f/message e)))))

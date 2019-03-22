@@ -28,11 +28,6 @@
             [hickory.core :as hick]
             [hickory.select :as hick-s]))
 
-(def test-app-name "social-wallet-api-test")
-
-(def mongo-db-only {:connection "mongo"
-                    :type "db-only"})
-
 (defn parse-body [body]
   (cheshire/parse-string (slurp body) true))
 

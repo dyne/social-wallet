@@ -81,25 +81,18 @@
                    "test-resources"]
   :main social-wallet.core
 
-  :env [
-
-        ;; translation is configured here, strings are hard-coded at compile time
-        ;; the last one acts as fallback if translated strings are not found
-        [:auth-translation-language "lang/auth-en.yml"]
-        [:auth-translation-fallback "lang/auth-en.yml"]
-        [:wallet-translation-language "lang/english.yaml"]]
-
   ;; When using the lein ring server the ring defaults are not merged properly with the config
   ;; This is because the handler is resolved before the init (def)
   :ring    {:init social-wallet.core/init
             :handler social-wallet.core/app-handler
-            :destroy social-wallet.core/destroy}
+            :destroy social-wallet.core/destroy
+            :port 3001}
   
   :profiles {:dev {:dependencies [[ring/ring-mock "0.3.2"]
                                   [midje "1.9.6" :exclusions [io.aviso/pretty commons-codec clj-time]]
                                   [javax.servlet/servlet-api "2.5"]
                                   ;; Parsing html to hiccup
-                                  [hickory "0.7.1"]
+                                  [hickory "0.7.1" :exclusions [org.clojure/tools.reader]]
                                   ]
                    :plugins [[lein-midje "3.1.3"]
                              [lein-ring "0.12.0"]]}}

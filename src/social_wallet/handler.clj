@@ -57,7 +57,7 @@
          ;; TODO: pass :ip-address in last argument map
          (let [session {:session {:auth (log/spy :info account)}}]
            (conj session
-                 (web/render-wallet account (get-in request  [:headers "host"]))))
+                 (web/render-wallet account (-> @app-state :config :swapi :endpoint))))
          (f/when-failed [e]
            (web/render-error-page
             (str "Login failed: " (f/message e))))))
