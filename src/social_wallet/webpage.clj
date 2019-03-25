@@ -31,7 +31,9 @@
 
             [auxiliary.translation :as t]
 
-            [social-wallet.swapi :as swapi]))
+            [social-wallet.swapi :as swapi]
+
+            [failjure.core :as f]))
 
 (declare render)
 (declare render-head)
@@ -285,10 +287,12 @@
                [:span {:class "gravatar pull-right"}
                 [:img {:src (clavatar/gravatar email :size 87 :default :mm)}]]
                [:div {:class "clearfix"}]]
-              [:div {:class "balance"}
-               (str (t/locale [:wallet :balance]) ": ")
-               [:span {:class "func--account-page--balance"}
-                (swapi/balance-request swapi-host (select-keys account [:email]))]]]
+              (f/if-let-ok? [balance (log/spy (swapi/balance-request swapi-host (log/spy (select-keys account [:email]))))]
+                [:div {:class "balance"}
+                 (str (t/locale [:wallet :balance]) ": ")
+                 [:span {:class "func--account-page--balance"}]
+                 balance]
+                (render-error (:message balance)))]
              (render-footer)])}))
 
 (defn highlight-yaml

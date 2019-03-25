@@ -18,13 +18,24 @@
 (ns social-wallet.swapi
   (:require [taoensso.timbre :as log]
             [org.httpkit.client :as client]
-            [cheshire.core :as json]))
+            [cheshire.core :as json]
+            [failjure.core :as f]))
 
+
+(defn- wrap-errors [response fn]
+  (if (or (:error response))
+      (f/fail (:error response))
+      (if (not= 200 (:status response))
+        (do
+          (log/trace "-> " (-> response :body type) " -> " (-> response :body))
+          (-> response :body (json/parse-string true) :error f/fail))
+        (fn response))))
 
 (defn- swapi-request [base-url endpoint json]
-  @(client/post (str base-url "/" endpoint)
-                {:query-params
-                 {:a json}}))
+  (let [response @(client/post (str base-url "/" endpoint)
+                               {:query-params
+                                {:a json}})]
+    (wrap-errors response #(-> % :body :balance))))
 
 (defn balance-request [base-url params]
   (swapi-request base-url
@@ -32,4 +43,4 @@
                  (json/generate-string
                   (cond-> {:connection "mongo"
                            :type "db-only"}
-                    (:email params) (merge (log/spy {:account-id (:email params)}))))))
+                    (:email params) (merge {:account-id (:email params)})))))

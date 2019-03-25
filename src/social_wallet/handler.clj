@@ -114,7 +114,7 @@
              [:h1 (str "Account activated - " email)])])))
   (GET "/qrcode/:email"
        [email :as request]
-       (log/spy (qrcode/transact-to email (get-in request [:headers "host"]))))
+       (qrcode/transact-to email (get-in request [:headers "host"])))
   (GET "/session" request
        (-> (:session request) web/render-yaml web/render))
   (GET "/logout" request
