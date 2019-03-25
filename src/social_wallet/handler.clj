@@ -41,12 +41,12 @@
         [:div
          [:h1 "Config Keys loaded"]
          [:ul (for [[x y] @app-state] [:li x])]]))
-  (GET "/login" {{:keys [user-id]} :session
+  (GET "/login" {{:keys [auth]} :session
                  {:keys [mime language]} :accept}
-       (if (and (log/spy user-id) (auth/get-account (-> @app-state :authenticator) user-id))
-         (web/render user-id
+       (if (and (log/spy auth) (auth/get-account (-> @app-state :authenticator) auth))
+         (web/render auth
                      [:div
-                      [:h1 (str "Already logged in with account: " user-id)]
+                      [:h1 (str "Already logged in with account: " auth)]
                       [:h2 [:a {:href "/logout"} "Logout"]]])
          (web/render web/login-form)))
   (POST "/login" request
@@ -57,7 +57,10 @@
          ;; TODO: pass :ip-address in last argument map
          (let [session {:session {:auth (log/spy :info account)}}]
            (conj session
-                 (web/render-wallet account (-> @app-state :config :swapi :endpoint))))
+                 (web/render-wallet account
+                                    (-> @app-state :config :swapi :endpoint)
+                                    (-> @app-state :config :swapi :apikey-file)
+                                    (-> @app-state :config :swapi :apikey-name))))
          (f/when-failed [e]
            (web/render-error-page
             (str "Login failed: " (f/message e))))))
@@ -114,7 +117,7 @@
              [:h1 (str "Account activated - " email)])])))
   (GET "/qrcode/:email"
        [email :as request]
-       (qrcode/transact-to email (get-in request [:headers "host"])))
+       (qrcode/transact-to email  (get-in request [:headers "host"])))
   (GET "/session" request
        (-> (:session request) web/render-yaml web/render))
   (GET "/logout" request

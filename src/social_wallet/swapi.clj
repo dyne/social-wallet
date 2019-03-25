@@ -19,7 +19,8 @@
   (:require [taoensso.timbre :as log]
             [org.httpkit.client :as client]
             [cheshire.core :as json]
-            [failjure.core :as f]))
+            [failjure.core :as f]
+            [yaml.core :as yaml]))
 
 
 (defn- wrap-errors [response fn]
@@ -27,20 +28,26 @@
       (f/fail (:error response))
       (if (not= 200 (:status response))
         (do
-          (log/trace "-> " (-> response :body type) " -> " (-> response :body))
+          (log/debug "-> " (-> response :body type) " -> " (-> response :body))
           (-> response :body (json/parse-string true) :error f/fail))
         (fn response))))
 
-(defn- swapi-request [base-url endpoint json]
+(defn- swapi-request [base-url endpoint headers json]
   (let [response @(client/post (str base-url "/" endpoint)
                                {:query-params
-                                {:a json}})]
-    (wrap-errors response #(-> % :body :balance))))
+                                {:a json}
+                                :headers (log/spy headers)})]
+    (wrap-errors (log/spy response) #(-> % log/spy :body :balance))))
 
-(defn balance-request [base-url params]
-  (swapi-request base-url
-                 "balance"
-                 (json/generate-string
-                  (cond-> {:connection "mongo"
-                           :type "db-only"}
-                    (:email params) (merge {:account-id (:email params)})))))
+(defn balance-request [base-url apikey-file apikey-name params]
+  (f/attempt-all [device (keyword apikey-name)
+                  apikey (f/try* (-> apikey-file slurp yaml/parse-string device))]
+                 (swapi-request base-url
+                                "balance"
+                                {:x-api-key apikey}
+                                (json/generate-string
+                                 (cond-> {:connection "mongo"
+                                          :type "db-only"}
+                                   (:email params) (merge {:account-id (:email params)}))))
+                 (f/when-failed [apikey]
+                   (f/fail apikey))))
