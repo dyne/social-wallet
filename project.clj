@@ -92,7 +92,7 @@
                                   [midje "1.9.6" :exclusions [io.aviso/pretty commons-codec clj-time]]
                                   [javax.servlet/servlet-api "2.5"]
                                   ;; Parsing html to hiccup
-                                  [hickory "0.7.1" :exclusions [org.clojure/tools.reader]]
+                                  [hickory "0.7.1" :exclusions [com.google.guava/guava org.clojure/tools.reader]]
                                   ]
                    :plugins [[lein-midje "3.1.3"]
                              [lein-ring "0.12.0"]]}}
