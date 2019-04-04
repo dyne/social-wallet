@@ -164,7 +164,6 @@
 (defn destroy []
   (swap! h/app-state disconnect-db))
 
-
 (defn stop-server []
   (when-not (nil? @server)
     ;; graceful shutdown: wait 100ms for existing requests to be finished

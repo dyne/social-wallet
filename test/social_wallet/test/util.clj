@@ -15,42 +15,24 @@
 
 ;; If you modify this Program, or any covered work, by linking or combining it with any library (or a modified version of that library), containing parts covered by the terms of EPL v 1.0, the licensors of this Program grant you additional permission to convey the resulting work. Your modified version must prominently offer all users interacting with it remotely through a computer network (if your version supports such interaction) an opportunity to receive the Corresponding Source of your version by providing access to the Corresponding Source from a network server at no charge, through some standard or customary means of facilitating copying of software. Corresponding Source for a non-source form of such a combination shall include the source code for the parts of the libraries (dependencies) covered by the terms of EPL v 1.0 used as well as that of the covered work.
 
-(ns social-wallet.test.core
+(ns social-wallet.test.util
   (:require [midje.sweet :refer [against-background before after facts fact =>]]
-            [ring.mock.request :as mock]
             [social-wallet
-             [core :as sc]
-             [handler :as h]
-             [webpage :as web]]
-            [taoensso.timbre :as log]
-            [cheshire.core :as cheshire]
-            
-            [hickory.core :as hick]
-            [hickory.select :as hick-s]))
+             [util :as u]]
+            [taoensso.timbre :as log]))
 
-(defn parse-body [body]
-  (cheshire/parse-string (slurp body) true))
-
-(against-background [(before :contents (sc/init "test-resources/config.yaml"))
-                     (after :contents (sc/destroy))]
-
-                    (facts "Check that the app state is loaded properly"
-                           (fact "check that the email throtling config is properly read"
-                                 (-> @h/app-state :config :just-auth :throttling)
-                                 => {:criteria #{:email, :ip-address} 
-                                     :type :block
-                                     :time-window-secs 3600
-                                     :threshold 1000}))
-                    (facts "Some basic requests work properly"
-                           (fact "Home page requests succeeds and returns correct text"
-                                 (let [response (h/app-routes (mock/request :get "/"))]
-                                   (:status response) => 200
-                                   (-> response
-                                       :body
-                                       hick/parse
-                                       hick/as-hickory
-                                       (as-> parsed (hick-s/select (hick-s/tag "h1") parsed))
-                                       log/spy
-                                       first
-                                       :content
-                                       first) => "Welcome to the Social Wallet"))))
+(facts "Check that the deep-merge fn is doing what it is supposed to do"
+       (fact "check that the deep-merge overrides with the latter map the former when same keys"
+             (let [former {:a {:a1 true
+                               :a2 true}}
+                   latter {:a {:a2 false}}]
+               (u/deep-merge former latter) => {:a {:a1 true
+                                                    :a2 false}}))
+       (fact "check that when new keys introduced in the latter they are added"
+             (let [former {:a {:a1 true
+                               :a2 true}}
+                   latter {:a {:a2 false
+                               :a3 true}}]
+               (u/deep-merge former latter) => {:a {:a1 true
+                                                    :a2 false
+                                                    :a3 true}})))
