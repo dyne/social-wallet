@@ -18,36 +18,53 @@
 (ns social-wallet.swapi
   (:require [taoensso.timbre :as log]
             [org.httpkit.client :as client]
-            [cheshire.core :as json]
+            [clojure.data.json :as json]
             [failjure.core :as f]
             [yaml.core :as yaml]))
 
+
+(defn- headers [apikey]
+  {"x-api-key" apikey
+   "Content-Type" "application/json"})
 
 (defn- wrap-errors [response fn]
   (if (or (:error response))
       (f/fail (:error response))
       (if (not= 200 (:status response))
         (do
-          (log/debug "-> " (-> response :body type) " -> " (-> response :body))
-          (-> response :body (json/parse-string true) :error f/fail))
+          (-> response :body (json/read-str :key-fn keyword) :error f/fail))
         (fn response))))
 
-(defn- swapi-request [base-url endpoint headers json]
-  (let [response @(client/post (str base-url "/" endpoint)
-                               {:query-params
-                                {:a json}
-                                :headers (log/spy headers)})]
-    (wrap-errors (log/spy response) #(-> % log/spy :body :balance))))
+(defn- swapi-request [base-url endpoint headers json body-parse-fn]
+  (let [response @(client/request {:url (str base-url "/" endpoint)
+                                   :method :post
+                                   :body json
+                                   :headers headers})]
+    (wrap-errors response body-parse-fn)))
 
 (defn balance-request [base-url apikey-file apikey-name params]
   (f/attempt-all [device (keyword apikey-name)
                   apikey (f/try* (-> apikey-file slurp yaml/parse-string device))]
                  (swapi-request base-url
                                 "balance"
-                                {:x-api-key apikey}
-                                (json/generate-string
+                                (headers apikey)
+                                (json/write-str
                                  (cond-> {:connection "mongo"
                                           :type "db-only"}
-                                   (:email params) (merge {:account-id (:email params)}))))
+                                   (:email params) (merge {:account-id (:email params)})))
+                                #(-> % :body (json/read-str :key-fn keyword) :amount))
+                 (f/when-failed [apikey]
+                   (f/fail apikey))))
+
+(defn label-request [base-url apikey-file apikey-name params]
+  (f/attempt-all [device (keyword apikey-name)
+                  apikey (f/try* (-> apikey-file slurp yaml/parse-string device))]
+                 (swapi-request base-url
+                                "label"
+                                (headers apikey)
+                                (json/write-str
+                                 {:connection "mongo"
+                                  :type "db-only"})
+                                #(-> % :body (json/read-str :key-fn keyword) :label))
                  (f/when-failed [apikey]
                    (f/fail apikey))))

@@ -35,7 +35,7 @@
                  [ring-logger "1.0.1"]
                  
                  ;; json
-                 [cheshire "5.8.1"]
+                 [org.clojure/data.json "0.2.6"]
 
                  ;; csv
                  [org.clojure/data.csv "0.1.4"]

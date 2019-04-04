@@ -21,13 +21,10 @@
             [social-wallet.handler :as h]
 
             [org.httpkit.server :refer [run-server]]
-            [compojure.handler :refer [site]]
 
             [ring.middleware.reload :as reload]
             [ring.middleware.defaults :refer
              [wrap-defaults site-defaults]]
-            [ring.middleware.accept :refer [wrap-accept]]
-            [ring.logger :as rl]
             
             [yummy.config :as yc]
             
@@ -36,8 +33,6 @@
             [just-auth.core :as auth]
 
             [failjure.core :as f]
-
-            [clojure.spec.alpha :as spec]
 
             [social-wallet.util :refer [deep-merge]]
             social-wallet.spec)
@@ -188,8 +183,8 @@
 
   (f/attempt-all [app-state (init)
                   handler (if (in-dev?)
-                            (log/spy (reload/wrap-reload (wrap-with-middleware #'h/app-routes))) ;; only reload when dev
-                            (log/spy app-handler))]
+                            (reload/wrap-reload (wrap-with-middleware #'h/app-routes)) ;; only reload when dev
+                            app-handler)]
                  (do (reset! server (run-server handler {:port 3001}))
                      (println "Starting server at port 3001"))
                  (f/if-failed [e]

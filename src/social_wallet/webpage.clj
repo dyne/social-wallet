@@ -17,14 +17,12 @@
 
 (ns social-wallet.webpage
   (:require [clojure.java.io :as io]
-            [cheshire.core :as json]
             [clojure.data.csv :as csv]
             [yaml.core :as yaml]
             [taoensso.timbre :as log]
             
             [hiccup.page :as page]
             [hiccup.form :as hf]
-            [hiccup.element :as el]
             [hiccup.util :as hu]
             
             [clavatar.core :as clavatar]
@@ -287,10 +285,10 @@
                [:span {:class "gravatar pull-right"}
                 [:img {:src (clavatar/gravatar email :size 87 :default :mm)}]]
                [:div {:class "clearfix"}]]
-              (f/if-let-ok? [balance (log/spy (swapi/balance-request swapi-host
-                                                                     apikey-file
-                                                                     apikey-name
-                                                                     (select-keys account [:email])))]
+              (f/if-let-ok? [balance (swapi/balance-request swapi-host
+                                                            apikey-file
+                                                            apikey-name
+                                                            (select-keys account [:email]))]
                 [:div {:class "balance"}
                  (str (t/locale [:wallet :balance]) ": ")
                  [:span {:class "func--account-page--balance"}]
