@@ -32,7 +32,8 @@
   (cheshire/parse-string (slurp body) true))
 
 (against-background [(before :contents (sc/init "test-resources/config.yaml"))
-                     (after :contents (sc/destroy))]
+                     ;; FIXME: travis doesnt like this, anyway to be part of mounts later
+                     #_(after :contents (sc/destroy))]
 
                     (facts "Check that the app state is loaded properly"
                            (fact "check that the email throtling config is properly read"
