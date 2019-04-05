@@ -31,8 +31,7 @@
   (if (or (:error response))
       (f/fail (:error response))
       (if (not= 200 (:status response))
-        (do
-          (-> response :body (json/read-str :key-fn keyword) :error f/fail))
+        (-> response :body (json/read-str :key-fn keyword) :error f/fail)
         (fn response))))
 
 (defn- swapi-request [base-url endpoint headers json body-parse-fn]
