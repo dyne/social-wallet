@@ -5,7 +5,9 @@
    compojure.core/POST
    failjure.core/attempt-all
    failjure.core/if-let-failed?
-   failjure.core/if-let-ok?]
+   failjure.core/if-let-ok?
+   failjure.core/if-failed
+   failjure.core/when-failed]
  :known-namespaces
    [clojure.string clojure.set]
  :known-tags

@@ -16,3 +16,4 @@ pom.xml.asc
 email-conf.yaml
 apikey.yaml
 .clj-kondo/
+.cache/
