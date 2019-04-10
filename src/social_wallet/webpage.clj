@@ -366,7 +366,8 @@
      [:input {:type "text" :name "name"
               :placeholder "Name"
               :class "form-control"
-              :style "margin-top: 1em"}]
+              :style "margin-top: 1em"
+              :id "signup-name"}]
      [:input {:type "text" :name "email"
               :placeholder "Email"
               :class "form-control"
@@ -379,6 +380,6 @@
               :placeholder "Repeat password"
               :class "form-control"
               :style "margin-top: 1em"}]
-     [:input {:type "submit" :value "Sign Up"
+     [:input {:type "submit" :name "sign-up-submit" :value "Sign Up"
               :class "btn btn-primary btn-lg btn-block"
               :style "margin-top: 1em"}]]]])

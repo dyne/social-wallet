@@ -108,10 +108,11 @@
 
 (defn init
   ([]
-   (init "config.yaml" false))
+   (init "config.yaml" false false))
   ([path]
-   (init path false))
-  ([path auth-admin]
+   (init path false false))
+  ;; TODO: probs much better to use something like mount here
+  ([path auth-admin stub-email]
    "The path for the config file and a flag for whether it is an admin only signup system or not."
    (f/attempt-all [_ (log/info "Loading translations...")
                    _ (auxiliary.translation/init "lang/auth-en.yml"
@@ -142,10 +143,16 @@
                                                  :spec (if auth-admin ::email-conf-admin ::email-conf)
                                                  :die-fn exception->failjure})
                    ;; start authenticator
-                   authenticator (auth/email-based-authentication
-                                  (:stores @h/app-state)
-                                  email-config
-                                  (-> @h/app-state :config :just-auth :throttling))
+                   authenticator (if (log/spy :info stub-email)
+                                   (auth/new-stub-email-based-authentication
+                                    (:stores @h/app-state)
+                                    (atom [])
+                                    {}
+                                    (-> @h/app-state :config :just-auth :throttling))
+                                   (auth/email-based-authentication
+                                    (:stores @h/app-state)
+                                    email-config
+                                    (-> @h/app-state :config :just-auth :throttling)))
                    _ (log/info "Collections created!")]
                   (do
                     (swap! h/app-state  #(assoc % :authenticator authenticator))
