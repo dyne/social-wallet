@@ -20,6 +20,9 @@
   :url "http://dyne.org"
   :min-lein-version "2.0.0"
   :dependencies [[org.clojure/clojure "1.10.0"]
+                 ;; Command line processing
+                 [org.clojure/tools.cli "0.4.2"]
+                 
                  ;; ring routing
                  [compojure "1.6.1"]
                  

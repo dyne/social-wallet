@@ -15,17 +15,19 @@
 
 ;; If you modify this Program, or any covered work, by linking or combining it with any library (or a modified version of that library), containing parts covered by the terms of EPL v 1.0, the licensors of this Program grant you additional permission to convey the resulting work. Your modified version must prominently offer all users interacting with it remotely through a computer network (if your version supports such interaction) an opportunity to receive the Corresponding Source of your version by providing access to the Corresponding Source from a network server at no charge, through some standard or customary means of facilitating copying of software. Corresponding Source for a non-source form of such a combination shall include the source code for the parts of the libraries (dependencies) covered by the terms of EPL v 1.0 used as well as that of the covered work.
 
-(ns social-wallet.util
+(ns social-wallet.config
   (:require [taoensso.timbre :as log]
-            [failjure.core :refer [fail]]))
 
-(defn deep-merge [a b]
-  (merge-with (fn [x y]
-                (cond (map? y) (deep-merge x y) 
-                      (vector? y) (concat x y) 
-                      :else y)) 
-              a b))
+            [social-wallet.util :refer [exception->failjure]]
+            social-wallet.spec
+            
+            [yummy.config :as yc]
+            [mount.core :refer [defstate]]))
 
-(defn exception->failjure
-  [e msg]
-  (fail (str msg ": " {:cause e})))
+(defn- load-config [path]
+  (log/info "Loading config...")
+  (yc/load-config {:path path
+                   :spec ::config
+                   :die-fn exception->failjure}))
+
+(defstate config :start (load-config "config.yaml"))

@@ -15,17 +15,47 @@
 
 ;; If you modify this Program, or any covered work, by linking or combining it with any library (or a modified version of that library), containing parts covered by the terms of EPL v 1.0, the licensors of this Program grant you additional permission to convey the resulting work. Your modified version must prominently offer all users interacting with it remotely through a computer network (if your version supports such interaction) an opportunity to receive the Corresponding Source of your version by providing access to the Corresponding Source from a network server at no charge, through some standard or customary means of facilitating copying of software. Corresponding Source for a non-source form of such a combination shall include the source code for the parts of the libraries (dependencies) covered by the terms of EPL v 1.0 used as well as that of the covered work.
 
-(ns social-wallet.util
+(ns social-wallet.server
   (:require [taoensso.timbre :as log]
-            [failjure.core :refer [fail]]))
 
-(defn deep-merge [a b]
-  (merge-with (fn [x y]
-                (cond (map? y) (deep-merge x y) 
-                      (vector? y) (concat x y) 
-                      :else y)) 
-              a b))
+            [social-wallet.handler :as h]
+            [social-wallet.util :refer [deep-merge]]
 
-(defn exception->failjure
-  [e msg]
-  (fail (str msg ": " {:cause e})))
+            [ring.middleware.defaults :refer
+             [wrap-defaults site-defaults]]
+            [org.httpkit.server :refer [run-server]]
+            [mount.core :as mount :refer [defstate]]))
+
+(declare stop-server)
+
+(defn my-wrap-accept [handler {:keys [mime language]}]
+  (fn [request]
+    (-> request
+        (assoc-in [:accept :mime] mime)
+        (assoc-in [:accept :language] language)
+        handler)))
+
+(defn wrap-with-middleware [handler]
+  (-> handler
+      (my-wrap-accept {:mime ["text/html"
+                              "text/plain"
+                              "text/css"]
+                       ;; preference in language, fallback to english
+                       :language ["en" :qs 0.5
+                                  "it" :qs 1
+                                  "nl" :qs 1
+                                  "hr" :qs 1]})
+      (wrap-defaults (log/spy (deep-merge site-defaults
+                                          (-> @h/app-state :config :webserver))))))
+
+(defn start-server [{:keys [port]}]
+  (log/info "Starting server at port " port " ...")
+  (let [handler (wrap-with-middleware h/app-routes)]
+    (run-server handler {:port port})))
+
+(defstate server :start (start-server (mount/args))
+                 :stop (stop-server))
+
+(defn stop-server []
+  (log/info "Stopping server... ")
+  (server :timeout 100))
