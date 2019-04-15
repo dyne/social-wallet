@@ -57,6 +57,7 @@
 
                  ;; State management
                  [mount "0.1.16"]
+                 [tolitius/mount-up "0.1.2"]
 
                  ;; HTTP server
                  [http-kit "2.3.0"]

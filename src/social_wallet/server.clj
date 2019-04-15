@@ -20,6 +20,7 @@
 
             [social-wallet.handler :as h]
             [social-wallet.util :refer [deep-merge]]
+            [social-wallet.config :refer [config]]
 
             [ring.middleware.defaults :refer
              [wrap-defaults site-defaults]]
@@ -45,8 +46,8 @@
                                   "it" :qs 1
                                   "nl" :qs 1
                                   "hr" :qs 1]})
-      (wrap-defaults (log/spy (deep-merge site-defaults
-                                          (-> @h/app-state :config :webserver))))))
+      (wrap-defaults (deep-merge site-defaults
+                                 (-> config :webserver)))))
 
 (defn start-server [{:keys [port]}]
   (log/info "Starting server at port " port " ...")

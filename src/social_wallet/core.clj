@@ -18,7 +18,11 @@
 (ns social-wallet.core
   (:require [taoensso.timbre :as log]
             [mount.core :as mount]
-            [clojure.tools.cli :refer [parse-opts]]))
+            [clojure.tools.cli :refer [parse-opts]]
+
+            ;; Seems that mount needs the imports in order to start them
+  ;          [social-wallet.server]
+            [social-wallet.authenticator]))
 
 (defn parse-args [args]
   (let [opts [["-p" "--port [webapp port]" "Web app port"
@@ -31,5 +35,6 @@
 
 ;; example of an app entry point with arguments
 (defn -main [& args]
+  (log/info "Starting the social wallet GUI with params " args)
   (mount/start-with-args
-    (parse-args args)))
+   (parse-args args)))

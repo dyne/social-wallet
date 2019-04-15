@@ -24,6 +24,6 @@
 (spec/def ::just-auth (spec/keys :req-un [::email-config ::mongo-config ::throttling]))
 (spec/def ::security (spec/keys :req-un [::anti-forgery ::ssl-redirect]))
 (spec/def ::webserver (spec/keys :req-un [::security]))
-(spec/def :social-wallet.core/config (spec/keys :req-un [::webserver ::just-auth ::swapi]))
-(spec/def :social-wallet.core/email-conf (spec/keys :req-un [::email-server ::email-user ::email-pass ::email-address]))
+(spec/def :social-wallet.config/config (spec/keys :req-un [::webserver ::just-auth ::swapi]))
+(spec/def :social-wallet.authenticator/email-conf (spec/keys :req-un [::email-server ::email-user ::email-pass ::email-address]))
 (spec/def :social-wallet.core/email-conf-admin  (spec/keys :req-un [:social-wallet.core/email-conf ::email-admin]))

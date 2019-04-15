@@ -293,7 +293,7 @@
                  (str (t/locale [:wallet :balance]) ": ")
                  [:span {:class "func--account-page--balance"}]
                  balance]
-                (render-error (:message balance)))]
+                (render-error (f/message balance)))]
              (render-footer)])}))
 
 (defn highlight-yaml

@@ -23,6 +23,8 @@
             [social-wallet.util :refer [exception->failjure]]
             [just-auth.core :as auth]
 
+            social-wallet.spec
+            
             [yummy.config :as yc]
             [mount.core :as mount :refer [defstate]]))
 
