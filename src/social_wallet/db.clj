@@ -37,7 +37,7 @@
 
 (defn disconnect-db []
   (log/info "Disconnecting db...")
-  (mongo/disconnect (-> config :db :conn)))
+  (mongo/disconnect (:conn db)))
 
 
 (defstate db :start (connect-db)

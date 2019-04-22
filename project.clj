@@ -57,7 +57,7 @@
 
                  ;; State management
                  [mount "0.1.16"]
-                 [tolitius/mount-up "0.1.2"]
+                 [tolitius/mount-up "0.1.2" :exclusions [org.clojure/tools.logging]]
 
                  ;; HTTP server
                  [http-kit "2.3.0"]
