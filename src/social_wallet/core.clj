@@ -20,14 +20,19 @@
             [mount.core :as mount]
             [clojure.tools.cli :refer [parse-opts]]
 
-            ;; Seems that mount needs the imports in order to start them
-  ;          [social-wallet.server]
-            [social-wallet.authenticator]))
+            ;; Mount needs to require the ns in order to start them
+            [social-wallet.translation]
+            [social-wallet.authenticator]
+            [social-wallet.server]))
 
 (defn parse-args [args]
   (let [opts [["-p" "--port [webapp port]" "Web app port"
-               :default "3001"]
-              ["s" "--stub-email [stub email]" "Stub email?"]
+               :default 3001
+               :parse-fn #(Integer/parseInt %)
+               :validate [#(< 0 % 0x10000) "Must be a number between 0 and 65536"]]
+              ["s" "--stub-email [stub email]" "Stub email?"
+               :default false
+               :parse-fn #(Boolean/parseBoolean %)]
               ["a" "--auth-admin [auth admin]" "Auth admin?"]
               ["-h" "--help"]]]
     (-> (parse-opts args opts)

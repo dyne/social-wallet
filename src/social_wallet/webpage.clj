@@ -133,7 +133,7 @@
        "https://social-wallet.dyne.org")) ;; default desc
 
   ([title desc url]
-   (log/info "RENDERING HEAD")
+   (log/debug "RENDERING HEAD")
    [:head [:meta {:charset "utf-8"}]
     [:meta {:http-equiv "X-UA-Compatible" :content "IE=edge,chrome=1"}]
     [:meta
