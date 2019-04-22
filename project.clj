@@ -84,13 +84,6 @@
   :resource-paths ["resources"
                    "test-resources"]
   :main social-wallet.core
-
-  ;; When using the lein ring server the ring defaults are not merged properly with the config
-  ;; This is because the handler is resolved before the init (def)
-  :ring    {:init social-wallet.core/init
-            :handler social-wallet.core/app-handler
-            :destroy social-wallet.core/destroy
-            :port 3001}
   
   :profiles {:dev {:dependencies [[ring/ring-mock "0.3.2"]
                                   [midje "1.9.6" :exclusions [io.aviso/pretty commons-codec clj-time]]

@@ -30,6 +30,8 @@
                :default 3001
                :parse-fn #(Integer/parseInt %)
                :validate [#(< 0 % 0x10000) "Must be a number between 0 and 65536"]]
+              ["-c" "--config [config file]" "The app config file path"
+               :default "config.yaml"]
               ["s" "--stub-email [stub email]" "Stub email?"
                :default false
                :parse-fn #(Boolean/parseBoolean %)]
@@ -43,3 +45,7 @@
   (log/info "Starting the social wallet GUI with params " args)
   (mount/start-with-args
    (parse-args args)))
+
+
+(comment
+  (mount/start-with-args {:port 3001 :config "config.yaml"}))

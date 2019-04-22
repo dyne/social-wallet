@@ -22,12 +22,12 @@
             social-wallet.spec
             
             [yummy.config :as yc]
-            [mount.core :refer [defstate]]))
+            [mount.core :as mount :refer [defstate]]))
 
-(defn- load-config [path]
+(defn- load-config [{:keys [config]}]
   (log/info "Loading config...")
-  (yc/load-config {:path path
+  (yc/load-config {:path config
                    :spec ::config
                    :die-fn exception->failjure}))
-
-(defstate config :start (load-config "config.yaml"))
+ 
+(defstate config :start (load-config (mount/args)))
