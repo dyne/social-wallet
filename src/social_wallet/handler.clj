@@ -78,7 +78,7 @@
           (if (= password repeat-password)
             (f/try*
              (f/if-let-ok?
-                 [signup (auth/sign-up  authenticator
+                 [signup (auth/sign-up authenticator
                                        name
                                        email
                                        password

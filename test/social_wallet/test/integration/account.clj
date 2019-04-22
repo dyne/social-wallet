@@ -20,7 +20,9 @@
             [social-wallet
              [core :as sc]
              [handler :as h]
-             [webpage :as web]]
+             [webpage :as web]
+             [stores :as stores]]
+            [clj-storage.core :as storage]
 
             [mount.core :as mount]
             [taoensso.timbre :as log])
@@ -37,7 +39,9 @@
 (against-background [(before :contents (mount/start-with-args {:port 3001
                                                                :stub-email true
                                                                :config "test-resources/config.yaml"}))
-                     (after :contents (mount/stop))]
+                     (after :contents (do
+                                        (storage/empty-db-stores! stores/stores)
+                                        (mount/stop)))]
 
                     (facts "Create and account, activate it, login and logout."
                            (fact "create and account"
@@ -56,19 +60,22 @@
                                        first
                                        (.id))
                                    => "signup-name")
-                                 #_(let [response (->
-                                                   (Jsoup/connect "http://localhost:3001/signup")
-                                                   (.userAgent "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.152 Safari/537.36")
-                                                   (.header "Content-Type","application/x-www-form-urlencoded")
-                                                   #_(.method Connection$Method/POST)
-                                                   (.data "name" (:name user-data))
-                                                   (.data "email" (log/spy :info (:email user-data)))
-                                                   (.data "password" (:password user-data))
-                                                   (.data "repeat-password" (:password user-data))
-                                                   (.data "email" (:email user-data))
-                                                   (.data "sing-up-submit" "Sign up")
-                                                   (.post))]
-                                     #_(.parse response)
-                                     response
-                                     )
+                                 (let [response (->
+                                                 (Jsoup/connect "http://localhost:3001/signup")
+                                                 (.userAgent "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.152 Safari/537.36")
+                                                 (.header "Content-Type","application/x-www-form-urlencoded")
+                                                 (.data "name" (:name user-data))
+                                                 (.data "email" (:email user-data))
+                                                 (.data "password" (:password user-data))
+                                                 (.data "repeat-password" (:password user-data))
+                                                 (.data "sing-up-submit" "Sign up")
+                                                  (.post))]
+                                   (-> response
+                                       (.select "body")
+                                       (.select "div.container-fluid")
+                                       (.select "h2")
+                                       (.text)) => (str "Account created: " (:name user-data) " <"(:email user-data) ">")))
+
+                           (fact "Activate it"
+                                 ;; TODO
                                  )))

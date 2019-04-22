@@ -25,10 +25,10 @@
 
             [social-wallet
              [config :as c]
-             [handler :as h]]
-            
-            [hickory.core :as hick]
-            [hickory.select :as hick-s]))
+             [handler :as h]])
+  (:import [org.jsoup Jsoup]
+           [org.jsoup.nodes Document]
+           [org.jsoup Connection$Method Connection$Response]))
 
 (defn parse-body [body]
   (cheshire/parse-string (slurp body) true))
@@ -47,13 +47,8 @@
                                      :threshold 1000}))
                     (facts "Some basic requests work properly"
                            (fact "Home page requests succeeds and returns correct text"
-                                 (let [response (h/app-routes (mock/request :get "/"))]
-                                   (:status response) => 200
+                                 (let [response (.get (Jsoup/connect "http://localhost:3001/"))]
                                    (-> response
-                                       :body
-                                       hick/parse
-                                       hick/as-hickory
-                                       (as-> parsed (hick-s/select (hick-s/tag "h1") parsed))
-                                       first
-                                       :content
-                                       first) => "Welcome to the Social Wallet"))))
+                                       (.select "body")
+                                       (.select "h1")
+                                       (.text)) => "Welcome to the Social Wallet"))))

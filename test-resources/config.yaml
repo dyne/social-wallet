@@ -8,7 +8,7 @@ just-auth:
   mongo-config:
     host: localhost
     port: 27017
-    db: social-wallet
+    db: test-social-wallet
   throttling:
     criteria: !!set {!keyword email: null, !keyword ip-address: null}
     type: !keyword block

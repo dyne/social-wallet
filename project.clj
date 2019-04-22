@@ -88,9 +88,7 @@
   :profiles {:dev {:dependencies [[ring/ring-mock "0.3.2"]
                                   [midje "1.9.6" :exclusions [io.aviso/pretty commons-codec clj-time]]
                                   [javax.servlet/servlet-api "2.5"]
-                                  ;; Parsing html to hiccup
-                                  [hickory "0.7.1" :exclusions [com.google.guava/guava org.clojure/tools.reader]]
-                                  ]
+                                  [org.jsoup/jsoup "1.9.2"]]
                    :plugins [[lein-midje "3.1.3"]
                              [lein-ring "0.12.0"]]}}
   )
