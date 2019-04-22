@@ -15,15 +15,15 @@
 
 ;; If you modify this Program, or any covered work, by linking or combining it with any library (or a modified version of that library), containing parts covered by the terms of EPL v 1.0, the licensors of this Program grant you additional permission to convey the resulting work. Your modified version must prominently offer all users interacting with it remotely through a computer network (if your version supports such interaction) an opportunity to receive the Corresponding Source of your version by providing access to the Corresponding Source from a network server at no charge, through some standard or customary means of facilitating copying of software. Corresponding Source for a non-source form of such a combination shall include the source code for the parts of the libraries (dependencies) covered by the terms of EPL v 1.0 used as well as that of the covered work.
 
-(ns social-wallet.spec
-  (:require [taoensso.timbre :as log]
-            [clojure.spec.alpha :as spec]))
+(ns social-wallet.translation
+    (:require [taoensso.timbre :as log]
+              [mount.core :refer [defstate]]
+              [auxiliary.translation :refer [init]]))
 
-(spec/def ::mongo-config (spec/keys :req-un [::host ::port ::db]))
-(spec/def ::throttling (spec/keys :req-un [::criteria ::type ::time-window-secs ::threshold]))
-(spec/def ::just-auth (spec/keys :req-un [::email-config ::mongo-config ::throttling]))
-(spec/def ::security (spec/keys :req-un [::anti-forgery ::ssl-redirect]))
-(spec/def ::webserver (spec/keys :req-un [::security]))
-(spec/def :social-wallet.config/config (spec/keys :req-un [::webserver ::just-auth ::swapi]))
-(spec/def :social-wallet.authenticator/email-conf (spec/keys :req-un [::email-server ::email-user ::email-pass ::email-address]))
-(spec/def :social-wallet.core/email-conf-admin  (spec/keys :req-un [:social-wallet.core/email-conf ::email-admin]))
+
+(defn- load-translations []
+  (log/info "Loading translations...")
+  (init "lang/auth-en.yml"
+        "lang/english.yaml"))
+
+(defstate translations :start (load-translations))

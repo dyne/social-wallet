@@ -7,7 +7,8 @@
    failjure.core/if-let-failed?
    failjure.core/if-let-ok?
    failjure.core/if-failed
-   failjure.core/when-failed]
+   failjure.core/when-failed
+   mount.core/defstate]
  :known-namespaces
    [clojure.string clojure.set]
  :known-tags

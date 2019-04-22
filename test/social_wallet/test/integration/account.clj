@@ -21,8 +21,10 @@
              [core :as sc]
              [handler :as h]
              [webpage :as web]]
-            [taoensso.timbre :as log]
-            [org.httpkit.server :refer [run-server]])
+
+            [mount.core :as mount]
+            [taoensso.timbre :as log])
+  
   (:import [org.jsoup Jsoup]
            [org.jsoup.nodes Document]
            [org.jsoup Connection$Method Connection$Response]))
@@ -32,11 +34,10 @@
                 :password "12345678"})
 (def server (atom nil))
 
-(against-background [(before :contents (do (sc/init "test-resources/config.yaml" false true)
-                                           (reset! server (log/spy (run-server sc/app-handler {:port 3001})))))
-                     (after :contents (do (sc/destroy)
-                                          (@server :timeout 100)
-                                          (reset! server nil)))]
+(against-background [(before :contents (mount/start-with-args {:port 3001
+                                                               :stub-email true
+                                                               :config "test-resources/config.yaml"}))
+                     (after :contents (mount/stop))]
 
                     (facts "Create and account, activate it, login and logout."
                            (fact "create and account"
@@ -56,18 +57,18 @@
                                        (.id))
                                    => "signup-name")
                                  #_(let [response (->
-                                                 (Jsoup/connect "http://localhost:3001/signup")
-                                                 (.userAgent "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.152 Safari/537.36")
-                                                 (.header "Content-Type","application/x-www-form-urlencoded")
-                                                    #_(.method Connection$Method/POST)
-                                                    (.data "name" (:name user-data))
-                                                    (.data "email" (log/spy :info (:email user-data)))
-                                                    (.data "password" (:password user-data))
-                                                    (.data "repeat-password" (:password user-data))
-                                                    (.data "email" (:email user-data))
-                                                    (.data "sing-up-submit" "Sign up")
-                                                    (.post))]
-                                   #_(.parse response)
-                                   response
-                                   )
+                                                   (Jsoup/connect "http://localhost:3001/signup")
+                                                   (.userAgent "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.152 Safari/537.36")
+                                                   (.header "Content-Type","application/x-www-form-urlencoded")
+                                                   #_(.method Connection$Method/POST)
+                                                   (.data "name" (:name user-data))
+                                                   (.data "email" (log/spy :info (:email user-data)))
+                                                   (.data "password" (:password user-data))
+                                                   (.data "repeat-password" (:password user-data))
+                                                   (.data "email" (:email user-data))
+                                                   (.data "sing-up-submit" "Sign up")
+                                                   (.post))]
+                                     #_(.parse response)
+                                     response
+                                     )
                                  )))

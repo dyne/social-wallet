@@ -3,7 +3,7 @@
 ;; Copyright (C) 2019- Dyne.org foundation
 
 ;; Sourcecode designed, written and maintained by
-;; TODO:
+;; Aspasia Beneti <aspra@dyne.org>
 
 ;; This program is free software; you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
@@ -15,30 +15,12 @@
 
 ;; If you modify this Program, or any covered work, by linking or combining it with any library (or a modified version of that library), containing parts covered by the terms of EPL v 1.0, the licensors of this Program grant you additional permission to convey the resulting work. Your modified version must prominently offer all users interacting with it remotely through a computer network (if your version supports such interaction) an opportunity to receive the Corresponding Source of your version by providing access to the Corresponding Source from a network server at no charge, through some standard or customary means of facilitating copying of software. Corresponding Source for a non-source form of such a combination shall include the source code for the parts of the libraries (dependencies) covered by the terms of EPL v 1.0 used as well as that of the covered work.
 
-(ns user
+(ns social-wallet.stores
   (:require [taoensso.timbre :as log]
+
+            [just-auth.db.just-auth :as auth-db]
+            [social-wallet.db :refer [db]]
             
-            #_[social-wallet.ring :as ring]
-            [social-wallet.handler :as handler]
-            #_[ring.adapter.jetty :refer [run-jetty]]))
+            [mount.core :refer [defstate]]))
 
-#_(defn run-dev-server
-  ([]
-   (run-dev-server 3000))
-  ([port]
-   (log/info "Starting Jetty server...")
-   (run-jetty handler/app {:port port})
-   (log/info "Started server!")))
-
-#_(defn stop-dev-server [server]
-  (log/info "Stopping Jetty server...")
-  (.stop server)
-  (log/info "Stopped server!"))
-
-#_(defn start-dev [port]
-  (ring/init)
-  (run-dev-server port))
-
-#_(defn stop-dev []
-  ;; TODO: Repl hanging when starting jetty-server cause it is synchronous. How to stop?
-  (ring/destroy))
+(defstate stores :start (auth-db/create-auth-stores (:db db)))

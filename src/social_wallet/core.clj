@@ -17,181 +17,35 @@
 
 (ns social-wallet.core
   (:require [taoensso.timbre :as log]
+            [mount.core :as mount]
+            [clojure.tools.cli :refer [parse-opts]]
 
-            [social-wallet.handler :as h]
+            ;; Mount needs to require the ns in order to start them
+            [social-wallet.translation]
+            [social-wallet.authenticator]
+            [social-wallet.server]))
 
-            [org.httpkit.server :refer [run-server]]
+(defn parse-args [args]
+  (let [opts [["-p" "--port [webapp port]" "Web app port"
+               :default 3001
+               :parse-fn #(Integer/parseInt %)
+               :validate [#(< 0 % 0x10000) "Must be a number between 0 and 65536"]]
+              ["-c" "--config [config file]" "The app config file path"
+               :default "config.yaml"]
+              ["s" "--stub-email [stub email]" "Stub email?"
+               :default false
+               :parse-fn #(Boolean/parseBoolean %)]
+              ["a" "--auth-admin [auth admin]" "Auth admin?"]
+              ["-h" "--help"]]]
+    (-> (parse-opts args opts)
+        :options)))
 
-            [ring.middleware.reload :as reload]
-            [ring.middleware.defaults :refer
-             [wrap-defaults site-defaults]]
-            
-            [yummy.config :as yc]
-            
-            [clj-storage.db.mongo :as mongo]
-            [just-auth.db.just-auth :as auth-db]
-            [just-auth.core :as auth]
-
-            [failjure.core :as f]
-
-            [social-wallet.util :refer [deep-merge]]
-            social-wallet.spec)
-  ;; TODO needed for jar
-  #_(:gen-class))
-
-(defonce server (atom nil))
-
-(defn conf->mongo-uri [mongo-conf]
-  (str "mongodb://" (:host mongo-conf) ":" (:port mongo-conf) "/" (:db mongo-conf)))
-
-(defn connect-db [app-state]
-  (if (:db app-state)
-    app-state
-    (f/attempt-all [uri (conf->mongo-uri (-> app-state :config :just-auth :mongo-config))
-                    db (mongo/get-mongo-db-and-conn uri)]
-                   (assoc app-state :db db)
-                   (f/if-failed [e]
-                                (log/error (str "Could not connect to db: " (f/message e)))
-                                (System/exit 0)))))
-
-(defn disconnect-db [app-state]
-  (if (:db app-state)
-    (do
-      (mongo/disconnect (:conn (:db app-state)))
-      (dissoc app-state :db))
-    (log/warn "Could not disconnect db.")))
-
-(defn exception->failjure
-  [e msg]
-  (f/fail (str msg ": " {:cause e})))
-
-(defn init-logger [log-level]
-  (log/merge-config! {:level (keyword log-level)
-                      ;; #{:trace :debug :info :warn :error :fatal :report}
-
-                      ;; Control log filtering by
-                      ;; namespaces/patterns. Useful for turning off
-                      ;; logging in noisy libraries, etc.:
-                      :ns-whitelist  ["social-wallet.*"
-                                      "freecoin-lib.*"
-                                      "clj-storage.*"
-                                      "just-auth.*"]
-                      :ns-blacklist  ["org.eclipse.jetty.*"]}))
-
-
-(defn my-wrap-accept [handler {:keys [mime language]}]
-  (fn [request]
-    (-> request
-        (assoc-in [:accept :mime] mime)
-        (assoc-in [:accept :language] language)
-        handler)))
-
-(defn wrap-with-middleware [handler]
-  (-> handler
-      (my-wrap-accept {:mime ["text/html"
-                              "text/plain"
-                              "text/css"]
-                       ;; preference in language, fallback to english
-                       :language ["en" :qs 0.5
-                                  "it" :qs 1
-                                  "nl" :qs 1
-                                  "hr" :qs 1]})
-      (wrap-defaults (log/spy (deep-merge site-defaults
-                                          (-> @h/app-state :config :webserver))))
-
-      ;; TODO: make this an option
-      #_rl/wrap-with-logger))
-
-(def app-handler
-  (wrap-with-middleware h/app-routes))
-
-
-(defn init
-  ([]
-   (init "config.yaml" false false))
-  ([path]
-   (init path false false))
-  ;; TODO: probs much better to use something like mount here
-  ([path auth-admin stub-email]
-   "The path for the config file and a flag for whether it is an admin only signup system or not."
-   (f/attempt-all [_ (log/info "Loading translations...")
-                   _ (auxiliary.translation/init "lang/auth-en.yml"
-                                                 "lang/english.yaml")
-                   _ (log/info "Translations loaded!")
-                   _ (log/info "Loading config...")
-                   config (yc/load-config {:path path
-                                           :spec ::config
-                                           :die-fn exception->failjure})
-                   _ (swap! h/app-state #(assoc % :config config))
-                   _ (log/info "Config loaded!")
-                   ;; Initialising logger
-                   _ (init-logger (or (:log-level config) "info"))
-                   ;; Connect to DB
-                   _ (log/info "Connecting to DB...")
-                   _ (swap! h/app-state connect-db)
-                   _ (log/info "Connected to DB!")
-                   ;; Create collections
-                   _ (log/info "Creating collections...")
-                   _ (swap! h/app-state #(assoc % :stores (auth-db/create-auth-stores
-                                                         (-> @h/app-state :db :db))))
-                   _ (log/info "Collections created!")
-
-                   ;; Starting authenticator
-                   _ (log/info "Starting authenticator...")
-                   config-path (-> @h/app-state :config :just-auth :email-config)
-                   email-config (yc/load-config {:path config-path
-                                                 :spec (if auth-admin ::email-conf-admin ::email-conf)
-                                                 :die-fn exception->failjure})
-                   ;; start authenticator
-                   authenticator (if (log/spy :info stub-email)
-                                   (auth/new-stub-email-based-authentication
-                                    (:stores @h/app-state)
-                                    (atom [])
-                                    {}
-                                    (-> @h/app-state :config :just-auth :throttling))
-                                   (auth/email-based-authentication
-                                    (:stores @h/app-state)
-                                    email-config
-                                    (-> @h/app-state :config :just-auth :throttling)))
-                   _ (log/info "Collections created!")]
-                  (do
-                    (swap! h/app-state  #(assoc % :authenticator authenticator))
-                    ;; Reload the whole app
-                    (reload/wrap-reload #'app-handler))
-
-                  ;; Start connection to swapi
-                  ;; TODO: think here, treat swapi as separate instance?
-
-                  ;; ERROR HANDLING
-                  (f/if-failed [e]
-                               (log/error (str "Could start the service: " (f/message e)))
-                               (swap! h/app-state disconnect-db)
-                               (f/fail (f/message e))))))
-
-(defn destroy []
-  (swap! h/app-state disconnect-db))
-
-(defn stop-server []
-  (when-not (nil? @server)
-    ;; graceful shutdown: wait 100ms for existing requests to be finished
-    ;; :timeout is optional, when no timeout, stop immediately
-    (@server :timeout 100)
-    (reset! server nil)))
-
-(defn in-dev? []
-  ;; TODO:
-  true) 
-
+;; example of an app entry point with arguments
 (defn -main [& args]
-  ;; The #' is useful when you want to hot-reload code
-  ;; You may want to take a look: https://github.com/clojure/tools.namespace
-  ;; and http://http-kit.org/migration.html#reload
+  (log/info "Starting the social wallet GUI with params " args)
+  (mount/start-with-args
+   (parse-args args)))
 
-  (f/attempt-all [app-state (init)
-                  handler (if (in-dev?)
-                            (reload/wrap-reload (wrap-with-middleware #'h/app-routes)) ;; only reload when dev
-                            app-handler)]
-                 (do (reset! server (run-server handler {:port 3001}))
-                     (println "Starting server at port 3001"))
-                 (f/if-failed [e]
-                              (print "Could not start server: " (f/message e)))))
+
+(comment
+  (mount/start-with-args {:port 3001 :config "config.yaml"}))

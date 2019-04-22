@@ -53,7 +53,7 @@
                                    (:email params) (merge {:account-id (:email params)})))
                                 #(-> % :body (json/read-str :key-fn keyword) :amount))
                  (f/when-failed [apikey]
-                   (f/fail apikey))))
+                   (f/message apikey))))
 
 (defn label-request [base-url apikey-file apikey-name params]
   (f/attempt-all [device (keyword apikey-name)
@@ -66,4 +66,4 @@
                                   :type "db-only"})
                                 #(-> % :body (json/read-str :key-fn keyword) :label))
                  (f/when-failed [apikey]
-                   (f/fail apikey))))
+                   (f/message apikey))))

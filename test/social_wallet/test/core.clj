@@ -18,12 +18,14 @@
 (ns social-wallet.test.core
   (:require [midje.sweet :refer [against-background before after facts fact =>]]
             [ring.mock.request :as mock]
-            [social-wallet
-             [core :as sc]
-             [handler :as h]
-             [webpage :as web]]
+
             [taoensso.timbre :as log]
             [cheshire.core :as cheshire]
+            [mount.core :as mount]
+
+            [social-wallet
+             [config :as c]
+             [handler :as h]]
             
             [hickory.core :as hick]
             [hickory.select :as hick-s]))
@@ -31,13 +33,14 @@
 (defn parse-body [body]
   (cheshire/parse-string (slurp body) true))
 
-(against-background [(before :contents (sc/init "test-resources/config.yaml"))
-                     ;; FIXME: travis doesnt like this, anyway to be part of mounts later
-                     #_(after :contents (sc/destroy))]
+(against-background [(before :contents (mount/start-with-args {:port 3001
+                                                               :stub-email true
+                                                               :config "test-resources/config.yaml"}))
+                     (after :contents (mount/stop))]
 
                     (facts "Check that the app state is loaded properly"
                            (fact "check that the email throtling config is properly read"
-                                 (-> @h/app-state :config :just-auth :throttling)
+                                 (-> c/config :just-auth :throttling)
                                  => {:criteria #{:email, :ip-address} 
                                      :type :block
                                      :time-window-secs 3600
@@ -51,7 +54,6 @@
                                        hick/parse
                                        hick/as-hickory
                                        (as-> parsed (hick-s/select (hick-s/tag "h1") parsed))
-                                       log/spy
                                        first
                                        :content
                                        first) => "Welcome to the Social Wallet"))))

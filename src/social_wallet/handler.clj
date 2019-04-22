@@ -23,12 +23,12 @@
 
             [social-wallet.webpage :as web]
             [social-wallet.qrcode :as qrcode]
+            [social-wallet.config :refer [config]]
+            [social-wallet.authenticator :refer [authenticator]]
 
             [just-auth.core :as auth]
 
             [taoensso.timbre :as log]))
-
-(defonce app-state (atom {}))
 
 (def welcome-html (str "<h1>Welcome to the Social Wallet</h1>\n"
                           "<p>" #_request "</p>"))
@@ -40,10 +40,10 @@
        (web/render
         [:div
          [:h1 "Config Keys loaded"]
-         [:ul (for [[x y] @app-state] [:li x])]]))
+         [:ul (for [[x _] config] [:li x])]]))
   (GET "/login" {{:keys [auth]} :session
                  {:keys [mime language]} :accept}
-       (if (and (log/spy auth) (auth/get-account (-> @app-state :authenticator) auth))
+       (if (and auth (auth/get-account authenticator auth))
          (web/render auth
                      [:div
                       [:h1 (str "Already logged in with account: " auth)]
@@ -53,14 +53,14 @@
         (f/attempt-all
          [username (-> request :params :username)
           password (-> request :params :password)
-          account (auth/sign-in (-> @app-state :authenticator) username password {})]
+          account (auth/sign-in  authenticator username password {})]
          ;; TODO: pass :ip-address in last argument map
-         (let [session {:session {:auth (log/spy :info account)}}]
+         (let [session {:session {:auth account}}]
            (conj session
                  (web/render-wallet account
-                                    (-> @app-state :config :swapi :endpoint)
-                                    (-> @app-state :config :swapi :apikey-file)
-                                    (-> @app-state :config :swapi :apikey-name))))
+                                    (-> config :swapi :endpoint)
+                                    (-> config :swapi :apikey-file)
+                                    (-> config :swapi :apikey-name))))
          (f/when-failed [e]
            (web/render-error-page
             (str "Login failed: " (f/message e))))))
@@ -78,7 +78,7 @@
           (if (= password repeat-password)
             (f/try*
              (f/if-let-ok?
-                 [signup (auth/sign-up (-> @app-state :authenticator)
+                 [signup (auth/sign-up  authenticator
                                        name
                                        email
                                        password
@@ -106,7 +106,7 @@
           [:div
            (f/if-let-failed?
                [act (auth/activate-account
-                     (-> @app-state :authenticator)
+                      authenticator
                      email
                      {:activation-link activation-uri})]
              (web/render-error

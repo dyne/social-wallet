@@ -20,6 +20,9 @@
   :url "http://dyne.org"
   :min-lein-version "2.0.0"
   :dependencies [[org.clojure/clojure "1.10.0"]
+                 ;; Command line processing
+                 [org.clojure/tools.cli "0.4.2"]
+                 
                  ;; ring routing
                  [compojure "1.6.1"]
                  
@@ -54,6 +57,7 @@
 
                  ;; State management
                  [mount "0.1.16"]
+                 [tolitius/mount-up "0.1.2" :exclusions [org.clojure/tools.logging]]
 
                  ;; HTTP server
                  [http-kit "2.3.0"]
@@ -80,13 +84,6 @@
   :resource-paths ["resources"
                    "test-resources"]
   :main social-wallet.core
-
-  ;; When using the lein ring server the ring defaults are not merged properly with the config
-  ;; This is because the handler is resolved before the init (def)
-  :ring    {:init social-wallet.core/init
-            :handler social-wallet.core/app-handler
-            :destroy social-wallet.core/destroy
-            :port 3001}
   
   :profiles {:dev {:dependencies [[ring/ring-mock "0.3.2"]
                                   [midje "1.9.6" :exclusions [io.aviso/pretty commons-codec clj-time]]

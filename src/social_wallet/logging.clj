@@ -15,15 +15,24 @@
 
 ;; If you modify this Program, or any covered work, by linking or combining it with any library (or a modified version of that library), containing parts covered by the terms of EPL v 1.0, the licensors of this Program grant you additional permission to convey the resulting work. Your modified version must prominently offer all users interacting with it remotely through a computer network (if your version supports such interaction) an opportunity to receive the Corresponding Source of your version by providing access to the Corresponding Source from a network server at no charge, through some standard or customary means of facilitating copying of software. Corresponding Source for a non-source form of such a combination shall include the source code for the parts of the libraries (dependencies) covered by the terms of EPL v 1.0 used as well as that of the covered work.
 
-(ns social-wallet.spec
+(ns social-wallet.logging
   (:require [taoensso.timbre :as log]
-            [clojure.spec.alpha :as spec]))
 
-(spec/def ::mongo-config (spec/keys :req-un [::host ::port ::db]))
-(spec/def ::throttling (spec/keys :req-un [::criteria ::type ::time-window-secs ::threshold]))
-(spec/def ::just-auth (spec/keys :req-un [::email-config ::mongo-config ::throttling]))
-(spec/def ::security (spec/keys :req-un [::anti-forgery ::ssl-redirect]))
-(spec/def ::webserver (spec/keys :req-un [::security]))
-(spec/def :social-wallet.config/config (spec/keys :req-un [::webserver ::just-auth ::swapi]))
-(spec/def :social-wallet.authenticator/email-conf (spec/keys :req-un [::email-server ::email-user ::email-pass ::email-address]))
-(spec/def :social-wallet.core/email-conf-admin  (spec/keys :req-un [:social-wallet.core/email-conf ::email-admin]))
+            [social-wallet.config :refer [config]]
+            [mount.core :refer [defstate]]))
+
+(defn init-logger [log-level]
+  (log/info "Intialising logger")
+  (log/merge-config! {:level (keyword log-level)
+                      ;; #{:trace :debug :info :warn :error :fatal :report}
+
+                      ;; Control log filtering by
+                      ;; namespaces/patterns. Useful for turning off
+                      ;; logging in noisy libraries, etc.:
+                      :ns-whitelist  ["social-wallet.*"
+                                      "freecoin-lib.*"
+                                      "clj-storage.*"
+                                      "just-auth.*"]
+                      :ns-blacklist  ["org.eclipse.jetty.*"]}))
+
+(defstate logger :start (init-logger (or (:log-level config) "info")))
