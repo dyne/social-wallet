@@ -24,6 +24,8 @@
             [failjure.core :as f]
             [mount.core :refer [defstate]]))
 
+(declare disconnect-db)
+
 (defn conf->mongo-uri [mongo-conf]
   (str "mongodb://" (:host mongo-conf) ":" (:port mongo-conf) "/" (:db mongo-conf)))
   
@@ -35,10 +37,9 @@
                  (f/if-failed [e]
                               (log/error (str "Could not connect to db: " (f/message e))))))
 
+(defstate db :start (connect-db)
+             :stop (disconnect-db))
+
 (defn disconnect-db []
   (log/info "Disconnecting db...")
   (mongo/disconnect (:conn db)))
-
-
-(defstate db :start (connect-db)
-             :stop (disconnect-db))
