@@ -20,7 +20,6 @@
 
             [social-wallet.config :refer [config]]
             [social-wallet.stores :refer [stores]]
-            [social-wallet.util :refer [exception->failjure]]
             [just-auth.core :as auth]
 
             social-wallet.spec
@@ -32,8 +31,7 @@
   (log/info "Creating authenticator...")
   (let [config-path (-> config :just-auth :email-config)
         email-config (yc/load-config {:path config-path
-                                  :spec (if auth-admin ::email-conf-admin ::email-conf)
-                                  :die-fn exception->failjure})]
+                                  :spec (if auth-admin ::email-conf-admin ::email-conf)})]
     (if stub-email
       (auth/new-stub-email-based-authentication
        stores (atom []) {} (-> config :just-auth :throttling))

@@ -18,7 +18,6 @@
 (ns social-wallet.config
   (:require [taoensso.timbre :as log]
 
-            [social-wallet.util :refer [exception->failjure]]
             social-wallet.spec
             
             [yummy.config :as yc]
@@ -27,7 +26,6 @@
 (defn- load-config [{:keys [config]}]
   (log/info "Loading config...")
   (yc/load-config {:path config
-                   :spec ::config
-                   :die-fn exception->failjure}))
+                   :spec ::config}))
  
 (defstate config :start (load-config (mount/args)))
