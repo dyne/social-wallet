@@ -354,7 +354,7 @@
               :placeholder "Password"
               :class "form-control"
               :style "margin-top: 1em"}]
-     [:input {:type "submit" :value "Login"
+     [:input {:type "submit" :name "login-submit" :value "Login"
               :class "btn btn-primary btn-lg btn-block"
               :style "margin-top: 1em"}]]]])
 

@@ -77,5 +77,33 @@
                                        (.text)) => (str "Account created: " (:name user-data) " <"(:email user-data) ">")))
 
                            (fact "Activate it"
-                                 ;; TODO
-                                 )))
+                                 (let [activation-uri (:activation-link (storage/fetch (-> stores/stores :account-store)
+                                                                                       (:email user-data)))
+                                       response (.get (Jsoup/connect activation-uri))]
+                                   (-> response
+                                       (.select "body")
+                                       (.select "div.container-fluid")
+                                       (.text))
+                                   => (str "Account activated - " (:email user-data))))
+
+                           (fact "Log in"
+                                 (let [response (->
+                                                 (Jsoup/connect "http://localhost:3001/login")
+                                                 (.userAgent "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.152 Safari/537.36")
+                                                 (.header "Content-Type","application/x-www-form-urlencoded")
+                                                 (.data "username" (:email user-data))
+                                                 (.data "password" (:password user-data))
+                                                 (.data "login-submit" "Login")
+                                                 (.post))]
+                                   (-> response
+                                       (.select "div.balance")
+                                       (.text))
+                                   => "Balance: 0"))
+
+                           (fact "Log out"
+                                 (let [response (.get (Jsoup/connect "http://localhost:3001/logout"))]
+                                   (-> response
+                                       (.select "body")
+                                       (.select "div.container-fluid")
+                                       (.text))
+                                   => "Logged out."))))

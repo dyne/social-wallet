@@ -16,4 +16,6 @@ just-auth:
     threshold: 1000
 
 swapi:
-  endpoint: "http://swapi.dyne.org"
+  endpoint: "http://localhost:3000/wallet/v1"
+  apikey-file: "apikey.yaml"
+  apikey-name: "device-id"

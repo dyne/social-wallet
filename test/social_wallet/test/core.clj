@@ -17,7 +17,6 @@
 
 (ns social-wallet.test.core
   (:require [midje.sweet :refer [against-background before after facts fact =>]]
-            [ring.mock.request :as mock]
 
             [taoensso.timbre :as log]
             [cheshire.core :as cheshire]
