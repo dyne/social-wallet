@@ -85,8 +85,7 @@
                    "test-resources"]
   :main social-wallet.core
   
-  :profiles {:dev {:dependencies [[ring/ring-mock "0.3.2"]
-                                  [midje "1.9.6" :exclusions [io.aviso/pretty commons-codec clj-time]]
+  :profiles {:dev {:dependencies [[midje "1.9.6" :exclusions [io.aviso/pretty commons-codec clj-time]]
                                   [javax.servlet/servlet-api "2.5"]
                                   [org.jsoup/jsoup "1.9.2"]]
                    :plugins [[lein-midje "3.1.3"]
