@@ -18,6 +18,7 @@
 (ns social-wallet.handler
   (:require [compojure.core :refer [defroutes routes GET POST]]
             [compojure.route :as route]
+            [ring.util.response :refer [redirect]]
 
             [failjure.core :as f]
 
@@ -32,6 +33,10 @@
 
 (def welcome-html (str "<h1>Welcome to the Social Wallet</h1>\n"
                           "<p>" #_request "</p>"))
+(defn get-host [request] (str
+                          (name (get request :scheme))
+                          "://"
+                          (get-in request [:headers "host"])))
 
 (defroutes app-routes
   (GET "/" request
@@ -57,13 +62,20 @@
          ;; TODO: pass :ip-address in last argument map
          (let [session {:session {:auth account}}]
            (conj session
-                 (web/render-wallet account
-                                    (-> config :swapi :endpoint)
-                                    (-> config :swapi :apikey-file)
-                                    (-> config :swapi :apikey-name))))
+                 (redirect (str "/wallet/" username))))
          (f/when-failed [e]
            (web/render-error-page
             (str "Login failed: " (f/message e))))))
+  (GET "/wallet/:email" request
+       (let [{{:keys [auth]} :session
+              {:keys [email]} :route-params} request]
+         (log/info "SESSION " auth " => " request)
+         (if (and auth (= (:email auth) email))
+           (web/render-wallet auth
+                              (-> config :swapi :endpoint)
+                              (-> config :swapi :apikey-file)
+                              (-> config :swapi :apikey-name))
+           (redirect "/login"))))
   (GET "/signup" request
        (web/render web/signup-form))
   (POST "/signup" request
@@ -72,8 +84,7 @@
           email (-> request :params :email)
           password (-> request :params :password)
           repeat-password (-> request :params :repeat-password)
-          activation {:activation-uri
-                      (get-in request [:headers "host"])}]
+          activation {:activation-uri (get-host request)}]
          (web/render
           (if (= password repeat-password)
             (f/try*
@@ -99,8 +110,7 @@
   (GET "/activate/:email/:activation-id"
        [email activation-id :as request]
        (let [activation-uri
-             (str "http://"
-                  (get-in request [:headers "host"])
+             (str (get-host request)
                   "/activate/" email "/" activation-id)]
          (web/render
           [:div
@@ -117,7 +127,7 @@
              [:h1 (str "Account activated - " email)])])))
   (GET "/qrcode/:email"
        [email :as request]
-       (qrcode/transact-to email  (get-in request [:headers "host"])))
+       (qrcode/transact-to email  (get-host request)))
   (GET "/session" request
        (-> (:session request) web/render-yaml web/render))
   (GET "/logout" request

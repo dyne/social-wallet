@@ -106,4 +106,12 @@
                                        (.select "body")
                                        (.select "div.container-fluid")
                                        (.text))
-                                   => "Logged out."))))
+                                   => "Logged out."))
+
+                           (fact "Cannot access the wallet page if not logged in - redirected to login"
+                                 (let [response (.get (Jsoup/connect (str "http://localhost:3001/wallet/" (:email user-data))))]
+                                   (-> response
+                                       (.select "body")
+                                       (.select "div.container-fluid")
+                                       (.text))
+                                   => "Login for your account"))))
