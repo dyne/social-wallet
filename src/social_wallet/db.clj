@@ -42,4 +42,4 @@
 
 (defn disconnect-db []
   (log/info "Disconnecting db...")
-  (mongo/disconnect (:conn db)))
+  (mongo/disconnect (log/spy (:conn (log/spy db)))))
