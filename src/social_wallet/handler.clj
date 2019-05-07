@@ -21,6 +21,7 @@
             [ring.util.response :refer [redirect]]
 
             [failjure.core :as f]
+            [mount.core :as mount]
 
             [social-wallet.webpage :as web]
             [social-wallet.qrcode :as qrcode]
@@ -69,12 +70,12 @@
   (GET "/wallet/:email" request
        (let [{{:keys [auth]} :session
               {:keys [email]} :route-params} request]
-         (log/info "SESSION " auth " => " request)
+         #_(log/info "SESSION " auth " => " request)
          (if (and auth (= (:email auth) email))
            (web/render-wallet auth
-                              (-> config :swapi :endpoint)
-                              (-> config :swapi :apikey-file)
-                              (-> config :swapi :apikey-name))
+                              (if (:with-apikey (mount/args))
+                                (:swapi config)
+                                (:noapikey-swapi config)))
            (redirect "/login"))))
   (GET "/signup" request
        (web/render web/signup-form))
