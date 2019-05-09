@@ -32,8 +32,11 @@
                :validate [#(< 0 % 0x10000) "Must be a number between 0 and 65536"]]
               ["-c" "--config [config file]" "The app config file path"
                :default "config.yaml"]
-              ["s" "--stub-email [stub email]" "Stub email?"
+              ["-s" "--stub-email [stub email]" "Stub email?"
                :default false
+               :parse-fn #(Boolean/parseBoolean %)]
+              ["-w" "--with-apikey [with apikey]" "Does the swapi need an api key?"
+               :default true
                :parse-fn #(Boolean/parseBoolean %)]
               ["a" "--auth-admin [auth admin]" "Auth admin?"]
               ["-h" "--help"]]]

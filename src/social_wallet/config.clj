@@ -23,9 +23,11 @@
             [yummy.config :as yc]
             [mount.core :as mount :refer [defstate]]))
 
-(defn- load-config [{:keys [config]}]
+(defn- load-config [{:keys [config api-key]}]
   (log/info "Loading config...")
   (yc/load-config {:path config
-                   :spec ::config}))
+                   :spec (if api-key
+                           ::config
+                           ::noapikey-config)}))
  
 (defstate config :start (load-config (mount/args)))

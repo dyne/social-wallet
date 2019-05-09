@@ -266,7 +266,7 @@
           (yaml/generate-string data)]]
    [:script "hljs.initHighlightingOnLoad();"]])
 
-(defn render-wallet [account swapi-host apikey-file apikey-name]
+(defn render-wallet [account swapi-params]
   (let [email (:email account)]
     {:headers {"Content-Type"
                "text/html; charset=utf-8"}
@@ -285,9 +285,7 @@
                [:span {:class "gravatar pull-right"}
                 [:img {:src (clavatar/gravatar email :size 87 :default :mm)}]]
                [:div {:class "clearfix"}]]
-              (f/if-let-ok? [balance (swapi/balance-request swapi-host
-                                                            apikey-file
-                                                            apikey-name
+              (f/if-let-ok? [balance (swapi/balance-request swapi-params
                                                             (select-keys account [:email]))]
                 [:div {:class "balance"}
                  (str (t/locale [:wallet :balance]) ": ")

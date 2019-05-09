@@ -18,6 +18,6 @@ just-auth:
     threshold: 1000
 
 swapi:
-  endpoint: "http://localhost:3000/wallet/v1"
+  base-url: "http://localhost:3000/wallet/v1"
   apikey-file: "apikey.yaml"
   apikey-name: "device-id"
