@@ -23,11 +23,16 @@
             [yummy.config :as yc]
             [mount.core :as mount :refer [defstate]]))
 
-(defn- load-config [{:keys [config api-key]}]
+(defn- load-config [{:keys [config with-apikey]}]
   (log/info "Loading config...")
   (yc/load-config {:path config
-                   :spec (if api-key
+                   :spec (if with-apikey
                            ::config
                            ::noapikey-config)}))
  
 (defstate config :start (load-config (mount/args)))
+
+(defn get-swapi-params []
+  (if (:with-apikey (mount/args))
+    (:swapi config)
+    (:noapikey-swapi config)))

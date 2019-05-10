@@ -22,11 +22,13 @@
 
             [failjure.core :as f]
             [mount.core :as mount]
+            [clojure.spec.alpha :as spec]
 
             [social-wallet.webpage :as web]
             [social-wallet.qrcode :as qrcode]
-            [social-wallet.config :refer [config]]
+            [social-wallet.config :refer [config] :as c]
             [social-wallet.authenticator :refer [authenticator]]
+            [social-wallet.swapi :as swapi]
 
             [just-auth.core :as auth]
 
@@ -72,10 +74,7 @@
               {:keys [email]} :route-params} request]
          #_(log/info "SESSION " auth " => " request)
          (if (and auth (= (:email auth) email))
-           (web/render-wallet auth
-                              (if (:with-apikey (mount/args))
-                                (:swapi config)
-                                (:noapikey-swapi config)))
+           (web/render-wallet auth (c/get-swapi-params))
            (redirect "/login"))))
   (GET "/signup" request
        (web/render web/signup-form))
@@ -134,5 +133,23 @@
   (GET "/logout" request
        (conj {:session nil}
              (web/render [:h1 "Logged out."])))
+  (GET "/sendto" request
+       (log/info "HEREEEEE" request)
+       web/render-sendto)
+  (POST "sendto" {{:keys [amount to tags]} :params
+                  {:keys [auth]} :session}
+        (f/attempt-all
+         [parsed-amount (spec/explain ::amount (BigDecimal. amount))
+          parsed-to (spec/explain ::to to)
+          parsed-tags (spec/explain ::tags (clojure.string/split tags #","))]
+         ;; TODO: check balance
+         (swapi/sendto-request (c/get-swapi-params) {:amount amount
+                                                     :to to
+                                                     :from (:email auth) 
+                                                     :tags parsed-tags})
+         (f/when-failed [e]
+           ;; TODO: make it appear in form
+           (web/render-error-page
+            (str "Error in send request: " (f/message e))))))
   (route/resources "/")
   (route/not-found "<h1>Page not found</h1>"))

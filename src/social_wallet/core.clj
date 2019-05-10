@@ -51,4 +51,4 @@
 
 
 (comment
-  (mount/start-with-args {:port 3001 :config "config.yaml"}))
+  (mount/start-with-args {:port 3001 :config "config.yaml" :with-apikey true}))

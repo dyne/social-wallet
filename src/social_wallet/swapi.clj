@@ -25,6 +25,8 @@
 
 (def headers {"Content-Type" "application/json"})
 
+
+
 (defn- wrap-response [response fn]
   (if (or (:error response))
       (f/fail (:error response))
@@ -53,11 +55,11 @@
 (defn balance-request [swapi-params params]
   (swapi-request {:swapi-params swapi-params
                   :endpoint "balance"
+                  ;; TODO: should be a parameter if it is db or blockchain
                   :json (json/write-str
                          (cond-> {:connection "mongo"
                                   :type "db-only"}
-                           (:email params)
-                           (merge {:account-id (:email params)})))
+                           (:email params) (merge {:account-id (:email params)})))
                   :body-parse-fn #(-> % :body (json/read-str :key-fn keyword) :amount)}))
 
 (defn label-request [swapi-params params]
@@ -67,3 +69,15 @@
                                  {:connection "mongo"
                                   :type "db-only"})
                   :body-parse-fn #(-> % :body (json/read-str :key-fn keyword) :label)}))
+
+(defn sendto-request [swapi-params params]
+  (swapi-request {:swapi-params swapi-params
+                  :endpoint "transactions/new"
+                  :json (json/write-str
+                         (cond-> {:connection "mongo"
+                                  :type "db-only"}
+                           (:amount params) (assoc :amount (:amount params))
+                           (:from params) (assoc :from-id (:from params))
+                           (:to params) (assoc :to-id (:to params))
+                           (not (empty? (:tags params))) (assoc :tags (:tags params))))
+                  :body-parse-fn #(-> % :body)}))

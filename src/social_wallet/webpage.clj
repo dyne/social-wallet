@@ -133,7 +133,6 @@
        "https://social-wallet.dyne.org")) ;; default desc
 
   ([title desc url]
-   (log/debug "RENDERING HEAD")
    [:head [:meta {:charset "utf-8"}]
     [:meta {:http-equiv "X-UA-Compatible" :content "IE=edge,chrome=1"}]
     [:meta
@@ -291,8 +290,31 @@
                  (str (t/locale [:wallet :balance]) ": ")
                  [:span {:class "func--account-page--balance"}]
                  balance]
-                (render-error (f/message balance)))]
+                (render-error (f/message balance)))
+              [:div
+               [:a {:href "/sendto"} (t/locale [:wallet :send])]]]
              (render-footer)])}))
+
+(defonce render-sendto
+  [:div
+   [:h1 "Send tokens"
+    [:form {:action "/sendto"
+            :method "post"}
+     [:input {:type "text" :name "amount"
+              :placeholder "amount"
+              :class "form-control"
+              :style "margin-top: 1em"}]
+     [:input {:type "text" :name "to"
+              :placeholder "to"
+              :class "form-control"
+              :style "margin-top: 1em"}]
+     [:input {:type "text" :name "tags"
+              :placeholder "tags (comma separated)"
+              :class "form-control"
+              :style "margin-top: 1em"}]
+     [:input {:type "submit" :name "sendto-submit" :value "Send"
+              :class "btn btn-primary btn-lg btn-block"
+              :style "margin-top: 1em"}]]]])
 
 (defn highlight-yaml
   "renders a yaml text in highlighted html"
