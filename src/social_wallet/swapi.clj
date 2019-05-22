@@ -52,7 +52,7 @@
                                      :headers headers})]
       (wrap-response response body-parse-fn))))
 
-(defn balance-request [swapi-params params]
+(defn balance [swapi-params params]
   (swapi-request {:swapi-params swapi-params
                   :endpoint "balance"
                   ;; TODO: should be a parameter if it is db or blockchain
@@ -70,7 +70,7 @@
                                   :type "db-only"})
                   :body-parse-fn #(-> % :body (json/read-str :key-fn keyword) :label)}))
 
-(defn sendto-request [swapi-params params]
+(defn sendto [swapi-params params]
   (swapi-request {:swapi-params swapi-params
                   :endpoint "transactions/new"
                   :json (json/write-str
@@ -81,3 +81,12 @@
                            (:to params) (assoc :to-id (:to params))
                            (not (empty? (:tags params))) (assoc :tags (:tags params))))
                   :body-parse-fn #(-> % :body)}))
+
+(defn list-transactions [swapi-params params]
+  (swapi-request {:swapi-params swapi-params
+                  :endpoint "transactions/list"
+                  :json (json/write-str
+                         (cond-> {:connection "mongo"
+                                  :type "db-only"}
+                           (:account params) (assoc :account-id (:account params))))
+                  :body-parse-fn #(-> % :body (json/read-str :key-fn keyword) :transactions)}))

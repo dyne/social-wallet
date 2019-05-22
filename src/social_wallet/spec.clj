@@ -33,7 +33,7 @@
 (spec/def :social-wallet.core/email-conf-admin  (spec/keys :req-un [:social-wallet.core/email-conf ::email-admin]))
 
 ;; Sendto form
-(spec/def :social-wallet.hanler/tags (or string? nil?))
-(spec/def :social-wallet.hanler/to string?)
+(spec/def :social-wallet.handler/tags vector?)
+(spec/def :social-wallet.handler/to string?)
 (spec/def :social-wallet.handler/amount (and decimal? #(> % 0.0)))
 (spec/def :social-wallet.webpage/sendto (spec/keys :req-un [:social-wallet.hanler/amount :social-wallet.hanler/to :social-wallet.hanler/tags]))

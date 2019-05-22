@@ -21,7 +21,6 @@
             [ring.util.response :refer [redirect]]
 
             [failjure.core :as f]
-            [mount.core :as mount]
             [clojure.spec.alpha :as spec]
 
             [social-wallet.webpage :as web]
@@ -29,6 +28,7 @@
             [social-wallet.config :refer [config] :as c]
             [social-wallet.authenticator :refer [authenticator]]
             [social-wallet.swapi :as swapi]
+            [social-wallet.util :as u]
 
             [just-auth.core :as auth]
 
@@ -134,19 +134,20 @@
        (conj {:session nil}
              (web/render [:h1 "Logged out."])))
   (GET "/sendto" request
-       (log/info "HEREEEEE" request)
-       web/render-sendto)
-  (POST "sendto" {{:keys [amount to tags]} :params
+       (web/render web/render-sendto))
+  (POST "/sendto" {{:keys [amount to tags]} :params
                   {:keys [auth]} :session}
         (f/attempt-all
-         [parsed-amount (spec/explain ::amount (BigDecimal. amount))
-          parsed-to (spec/explain ::to to)
-          parsed-tags (spec/explain ::tags (clojure.string/split tags #","))]
-         ;; TODO: check balance
-         (swapi/sendto-request (c/get-swapi-params) {:amount amount
-                                                     :to to
-                                                     :from (:email auth) 
-                                                     :tags parsed-tags})
+         ;; TODO: specs dont work
+         [parsed-amount (u/spec->failjure ::amount (BigDecimal. amount))
+          parsed-to (u/spec->failjure ::to to)
+          parsed-tags (u/spec->failjure ::tags (clojure.string/split tags #","))]
+         ;; TODO: check balance before transaction
+         (do (swapi/sendto (c/get-swapi-params) {:amount amount
+                                                 :to to
+                                                 :from (:email auth) 
+                                                 :tags parsed-tags})
+             (web/render-wallet auth (c/get-swapi-params)))
          (f/when-failed [e]
            ;; TODO: make it appear in form
            (web/render-error-page

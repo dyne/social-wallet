@@ -107,11 +107,12 @@
 (defn render-error
   "render an error message without ending the page"
   [err]
+  (log/error "Error occured: " err)
   [:div {:class "alert alert-danger" :role "alert"}
    [:span {:class "far fa-meh"
            :aria-hidden "true" :style "padding: .5em"}]
    [:span {:class "sr-only"} "Error:" ]
-   err])
+   (f/message err)])
 
 (defn render-error-page
   ([]    (render-error-page {} "Unknown"))
@@ -265,6 +266,26 @@
           (yaml/generate-string data)]]
    [:script "hljs.initHighlightingOnLoad();"]])
 
+(defn render-my-transactions [account swapi-params]
+  [:table.func--transactions-page--table.table.table-striped
+   [:thead
+    [:tr
+     ;; TODO: from transation
+     [:th "From"]
+     [:th "To"]
+     [:th "Amount"]
+     [:th "Time"]
+     [:th "Tags"]]]
+   [:tbody
+    (let [transactions (swapi/list-transactions swapi-params {:account (:email account)})]
+      (vec (first (for [t transactions]
+                    [:tr
+                     [:td (:from-id t)]
+                     [:td (:to-id t)]
+                     [:td (:amount-text t)]
+                     [:td (:timestamp t)]
+                     [:td (interpose ", " (:tags t))]]))))]])
+
 (defn render-wallet [account swapi-params]
   (let [email (:email account)]
     {:headers {"Content-Type"
@@ -284,15 +305,17 @@
                [:span {:class "gravatar pull-right"}
                 [:img {:src (clavatar/gravatar email :size 87 :default :mm)}]]
                [:div {:class "clearfix"}]]
-              (f/if-let-ok? [balance (swapi/balance-request swapi-params
-                                                            (select-keys account [:email]))]
+              (f/if-let-ok? [balance (swapi/balance swapi-params
+                                                    (select-keys account [:email]))]
                 [:div {:class "balance"}
                  (str (t/locale [:wallet :balance]) ": ")
                  [:span {:class "func--account-page--balance"}]
                  balance]
-                (render-error (f/message balance)))
+                (render-error balance))
               [:div
-               [:a {:href "/sendto"} (t/locale [:wallet :send])]]]
+               [:a {:href "/sendto"} (t/locale [:wallet :send])]]
+              [:div
+               (render-my-transactions account swapi-params)]]
              (render-footer)])}))
 
 (defonce render-sendto
