@@ -278,13 +278,13 @@
      [:th "Tags"]]]
    [:tbody
     (let [transactions (swapi/list-transactions swapi-params {:account (:email account)})]
-      (vec (first (for [t transactions]
-                    [:tr
-                     [:td (:from-id t)]
-                     [:td (:to-id t)]
-                     [:td (:amount-text t)]
-                     [:td (:timestamp t)]
-                     [:td (interpose ", " (:tags t))]]))))]])
+      (doall (for [t transactions]
+               [:tr
+                [:td (:from-id t)]
+                [:td (:to-id t)]
+                [:td (:amount-text t)]
+                [:td (:timestamp t)]
+                [:td (interpose ", " (:tags t))]])))]])
 
 (defn render-wallet [account swapi-params]
   (let [email (:email account)]
