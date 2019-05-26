@@ -4,6 +4,12 @@ webserver:
   security:
       anti-forgery: false
       ssl-redirect: false
+  session:
+      cookie-attrs:
+        # this number is the time in seconds until the session expires
+        max-age: 600
+        # change this to true for https only on production
+        secure: false  
 
 just-auth:
   email-config: "email-conf.yaml"

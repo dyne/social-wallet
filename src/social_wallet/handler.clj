@@ -41,6 +41,11 @@
                           "://"
                           (get-in request [:headers "host"])))
 
+(defn logged-in? [session-auth]
+  (if session-auth
+    true
+    (f/fail "Please log in to be able to access this info") ))
+
 (defroutes app-routes
   (GET "/" request
        (web/render welcome-html))
@@ -49,6 +54,7 @@
         [:div
          [:h1 "Config Keys loaded"]
          [:ul (for [[x _] config] [:li x])]]))
+  ;; TODO: change conf (POST app-state)
   (GET "/login" {{:keys [auth]} :session
                  {:keys [mime language]} :accept}
        (if (and auth (auth/get-account authenticator auth))
@@ -72,10 +78,16 @@
   (GET "/wallet/:email" request
        (let [{{:keys [auth]} :session
               {:keys [email]} :route-params} request]
-         #_(log/info "SESSION " auth " => " request)
-         (if (and auth (= (:email auth) email))
-           (web/render-wallet auth (c/get-swapi-params))
-           (redirect "/login"))))
+         (f/if-let-ok? [auth-resp (logged-in? auth)]
+           (if (and auth (= (:email auth) email))
+             (web/render-wallet auth (c/get-swapi-params))
+             (redirect "/login"))
+           (web/render-error-page (f/message auth-resp)))))
+  (GET "/transactions" request
+       (let [{{:keys [auth]} :session} request]
+         (f/if-let-ok? [auth-resp (logged-in? auth)]
+           (web/render-transaction-page (c/get-swapi-params))
+           (web/render-error-page (f/message auth-resp)))))
   (GET "/signup" request
        (web/render web/signup-form))
   (POST "/signup" request
@@ -134,7 +146,10 @@
        (conj {:session nil}
              (web/render [:h1 "Logged out."])))
   (GET "/sendto" request
-       (web/render web/render-sendto))
+       (let [{{:keys [auth]} :session} request ]
+         (f/if-let-ok? [auth-resp (logged-in? auth)]
+           (web/render web/render-sendto)
+           (web/render-error-page (f/message auth-resp)))))
   (POST "/sendto" {{:keys [amount to tags]} :params
                   {:keys [auth]} :session}
         (f/attempt-all

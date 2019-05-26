@@ -114,5 +114,6 @@
                                    (-> response
                                        (.select "body")
                                        (.select "div.container-fluid")
+                                       (.select "div.alert")
                                        (.text))
-                                   => "Login for your account"))))
+                                   => "Error:Please log in to be able to access this info"))))

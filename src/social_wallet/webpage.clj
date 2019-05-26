@@ -266,7 +266,7 @@
           (yaml/generate-string data)]]
    [:script "hljs.initHighlightingOnLoad();"]])
 
-(defn render-my-transactions [account swapi-params]
+(defn render-transactions [account swapi-params]
   [:table.func--transactions-page--table.table.table-striped
    [:thead
     [:tr
@@ -277,7 +277,8 @@
      [:th "Time"]
      [:th "Tags"]]]
    [:tbody
-    (let [transactions (swapi/list-transactions swapi-params {:account (:email account)})]
+    (let [transactions (swapi/list-transactions swapi-params (cond-> {}
+                                                               account (assoc :account (:email account))))]
       (doall (for [t transactions]
                [:tr
                 [:td (:from-id t)]
@@ -285,6 +286,17 @@
                 [:td (:amount-text t)]
                 [:td (:timestamp t)]
                 [:td (interpose ", " (:tags t))]])))]])
+
+(defn render-transaction-page [swapi-params]
+  {:headers {"Content-Type"
+             "text/html; charset=utf-8"}
+   :body (page/html5
+          (render-head)
+          [:body ;; {:class "static"}
+           navbar-account
+           [:div {:class "table-list"}
+            (render-transactions nil swapi-params)]
+           (render-footer)])})
 
 (defn render-wallet [account swapi-params]
   (let [email (:email account)]
@@ -315,7 +327,7 @@
               [:div
                [:a {:href "/sendto"} (t/locale [:wallet :send])]]
               [:div
-               (render-my-transactions account swapi-params)]]
+               (render-transactions account swapi-params)]]
              (render-footer)])}))
 
 (defonce render-sendto
