@@ -90,3 +90,11 @@
                                   :type "db-only"}
                            (:account params) (assoc :account-id (:account params))))
                   :body-parse-fn #(-> % :body (json/read-str :key-fn keyword) :transactions)}))
+
+(defn list-tags [swapi-params params]
+  (swapi-request {:swapi-params swapi-params
+                  :endpoint "tags/list"
+                  :json (json/write-str
+                         {:connection "mongo"
+                          :type "db-only"})
+                  :body-parse-fn #(-> % :body (json/read-str :key-fn keyword) :tags)}))

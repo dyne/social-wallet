@@ -21,7 +21,6 @@
             [ring.util.response :refer [redirect]]
 
             [failjure.core :as f]
-            [clojure.spec.alpha :as spec]
 
             [social-wallet.webpage :as web]
             [social-wallet.qrcode :as qrcode]
@@ -86,7 +85,12 @@
   (GET "/transactions" request
        (let [{{:keys [auth]} :session} request]
          (f/if-let-ok? [auth-resp (logged-in? auth)]
-           (web/render-transaction-page (c/get-swapi-params))
+           (web/render auth (web/render-transactions auth (c/get-swapi-params)))
+           (web/render-error-page (f/message auth-resp)))))
+  (GET "/tags" request
+       (let [{{:keys [auth]} :session} request]
+         (f/if-let-ok? [auth-resp (logged-in? auth)]
+           (web/render auth (web/render-tags (c/get-swapi-params)))
            (web/render-error-page (f/message auth-resp)))))
   (GET "/signup" request
        (web/render web/signup-form))
@@ -148,7 +152,7 @@
   (GET "/sendto" request
        (let [{{:keys [auth]} :session} request ]
          (f/if-let-ok? [auth-resp (logged-in? auth)]
-           (web/render web/render-sendto)
+           (web/render auth web/render-sendto)
            (web/render-error-page (f/message auth-resp)))))
   (POST "/sendto" {{:keys [amount to tags]} :params
                   {:keys [auth]} :session}

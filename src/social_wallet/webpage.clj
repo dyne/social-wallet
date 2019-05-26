@@ -99,7 +99,7 @@
            (render-head)
            [:body (if (empty? account)
                     navbar-guest
-                    navbar-account)
+                    (navbar-account account))
             [:div {:class "container-fluid"} body]
             (render-footer)])}))
 
@@ -182,7 +182,7 @@
                  :href "/signup"} " Sign-up"]]
       ]]])
 
-(def navbar-account
+(defn navbar-account [account]
   [:nav {:class "navbar navbar-default navbar-fixed-top navbar-expand-lg"}
 
     [:div {:class "navbar-header"}
@@ -200,27 +200,28 @@
      [:ul {:class "nav navbar-nav hidden-sm hidden-md ml-auto"}
       ;; --
       [:li {:class "divider" :role "separator"}]
-      ;; LIST OF RELEVANT LINKS AFTER LOGIN
-      ;; [:li {:class "nav-item"}
-      ;;  [:a {:class "nav-link far fa-address-card"
-      ;;       :href "/persons/list"} " Persons"]]
-      ;; [:li {:class "nav-item"}
-      ;;  [:a {:class "nav-link far fa-paper-plane"
-      ;;       :href "/projects/list"} " Projects"]]
-      ;; [:li {:class "nav-item"}
-      ;;  [:a {:class "nav-link far fa-plus-square"
-      ;;       :href "/timesheets"} " Upload"]]
-      ;; [:li {:class "nav-item"}
-      ;;  [:a {:class "nav-link far fa-save"
-      ;;       :href "/reload"} " Reload"]]
-      ;; --
       [:li {:role "separator" :class "divider"} ]
       [:li {:class "nav-item"}
        [:a {:class "nav-link far fa-file-code"
-            :href "/app-state"} " Configuration"]]
+            :href "/app-state"} (t/locale [:navbar :conf])]]
       [:li {:class "nav-item"}
        [:a {:class "nav-link far fa-file-code"
-            :href "/logout"} "Log out"]]
+            :href (str "/wallet/" (:email account))} (t/locale [:navbar :my-wallet])]]
+      [:li {:class "nav-item"}
+       [:a {:class "nav-link far fa-file-code"
+            :href "/sendto"} (t/locale [:wallet :send])]]
+      [:li {:class "nav-item"}
+       [:a {:class "nav-link far fa-file-code"
+            :href "/transactions"} (t/locale [:navbar :transactions])]]
+      [:li {:class "nav-item"}
+       [:a {:class "nav-link far fa-file-code"
+            :href "/participants"} (t/locale [:navbar :participants])]]
+      [:li {:class "nav-item"}
+       [:a {:class "nav-link far fa-file-code"
+            :href "/tags"} (t/locale [:navbar :tags])]]
+      [:li {:class "nav-item"}
+       [:a {:class "nav-link far fa-file-code"
+            :href "/logout"} (t/locale [:navbar :log-out])]]
       ]]])
 
 (defn render-footer []
@@ -287,13 +288,54 @@
                 [:td (:timestamp t)]
                 [:td (interpose ", " (:tags t))]])))]])
 
-(defn render-transaction-page [swapi-params]
+#_(defn render-participants [swapi-params]
+  [:table.func--transactions-page--table.table.table-striped
+   [:thead
+    [:tr
+     ;; TODO: from transation
+     [:th "From"]
+     [:th "To"]
+     [:th "Amount"]
+     [:th "Time"]
+     [:th "Tags"]]]
+   [:tbody
+    (let [participants (swapi/list-transactions swapi-params (cond-> {}
+                                                               account (assoc :account (:email account))))]
+      (doall (for [t transactions]
+               [:tr
+                [:td (:from-id t)]
+                [:td (:to-id t)]
+                [:td (:amount-text t)]
+                [:td (:timestamp t)]
+                [:td (interpose ", " (:tags t))]])))]])
+
+(defn render-tags [swapi-params]
+  [:table.func--transactions-page--table.table.table-striped
+   [:thead
+    [:tr
+     ;; TODO: from transation
+     [:th "Tag"]
+     [:th "Count"]
+     [:th "Amount"]
+     [:th "Created by"]
+     [:th "Created"]]]
+   [:tbody
+    (let [tags (swapi/list-tags swapi-params {})]
+      (doall (for [t tags]
+               [:tr
+                [:td (:tag t)]
+                [:td (:count t)]
+                [:td (:amount t)]
+                [:td (:created-by t)]
+                [:td (:created t)]])))]])
+
+#_(defn render-transaction-page [account swapi-params]
   {:headers {"Content-Type"
              "text/html; charset=utf-8"}
    :body (page/html5
           (render-head)
           [:body ;; {:class "static"}
-           navbar-account
+           (navbar-account account)
            [:div {:class "table-list"}
             (render-transactions nil swapi-params)]
            (render-footer)])})
@@ -305,7 +347,7 @@
      :body (page/html5
             (render-head)
             [:body ;; {:class "static"}
-             navbar-account
+             (navbar-account account)
              [:div {:class "wallet-details"}
               [:div {:class "card"}
                [:span (str (t/locale [:wallet :name]) ": " (:name account))]
@@ -324,8 +366,6 @@
                  [:span {:class "func--account-page--balance"}]
                  balance]
                 (render-error balance))
-              [:div
-               [:a {:href "/sendto"} (t/locale [:wallet :send])]]
               [:div
                (render-transactions account swapi-params)]]
              (render-footer)])}))

@@ -48,3 +48,11 @@ tag:
       value: "Value"
       created-by: "Created by"
       created: "Created"
+
+navbar:
+  my-wallet: "My wallet"
+  conf: "Configuration"
+  log-out: "Log out"
+  transactions: "All transactions"
+  participants: "All participants"
+  tags: "All tags"
