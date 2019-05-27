@@ -46,10 +46,10 @@
     (f/fail "Please log in to be able to access this info") ))
 
 (defroutes app-routes
-  (GET "/" request
-       (web/render welcome-html))
-  (GET "/app-state" request
-       (web/render
+  (GET "/" {{:keys [auth]} :session}
+       (web/render auth welcome-html))
+  (GET "/app-state" {{:keys [auth]} :session}
+       (web/render auth
         [:div
          [:h1 "Config Keys loaded"]
          [:ul (for [[x _] config] [:li x])]]))
@@ -86,6 +86,11 @@
        (let [{{:keys [auth]} :session} request]
          (f/if-let-ok? [auth-resp (logged-in? auth)]
            (web/render auth (web/render-transactions auth (c/get-swapi-params)))
+           (web/render-error-page (f/message auth-resp)))))
+  (GET "/participants" request
+       (let [{{:keys [auth]} :session} request]
+         (f/if-let-ok? [auth-resp (logged-in? auth)]
+           (web/render auth (web/render-participants (c/get-swapi-params)))
            (web/render-error-page (f/message auth-resp)))))
   (GET "/tags" request
        (let [{{:keys [auth]} :session} request]

@@ -28,9 +28,11 @@
             [clavatar.core :as clavatar]
 
             [auxiliary.translation :as t]
+            [just-auth.core :as auth]
 
             [social-wallet.swapi :as swapi]
-
+            [social-wallet.authenticator :refer [authenticator]]
+            
             [failjure.core :as f]))
 
 (declare render)
@@ -288,26 +290,21 @@
                 [:td (:timestamp t)]
                 [:td (interpose ", " (:tags t))]])))]])
 
-#_(defn render-participants [swapi-params]
+(defn render-participants [swapi-params]
   [:table.func--transactions-page--table.table.table-striped
    [:thead
     [:tr
      ;; TODO: from transation
-     [:th "From"]
-     [:th "To"]
-     [:th "Amount"]
-     [:th "Time"]
-     [:th "Tags"]]]
+     [:th "Name"]
+     [:th "Email"]
+     [:th "Other names"]]]
    [:tbody
-    (let [participants (swapi/list-transactions swapi-params (cond-> {}
-                                                               account (assoc :account (:email account))))]
-      (doall (for [t transactions]
+    (let [participants (auth/list-accounts authenticator {})]
+      (doall (for [p participants]
                [:tr
-                [:td (:from-id t)]
-                [:td (:to-id t)]
-                [:td (:amount-text t)]
-                [:td (:timestamp t)]
-                [:td (interpose ", " (:tags t))]])))]])
+                [:td (:name p)]
+                [:td (:email p)]
+                [:td (interpose ", " (:other-names p))]])))]])
 
 (defn render-tags [swapi-params]
   [:table.func--transactions-page--table.table.table-striped
