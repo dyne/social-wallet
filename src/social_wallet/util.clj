@@ -18,7 +18,7 @@
 (ns social-wallet.util
   (:require [taoensso.timbre :as log]
             [clojure.spec.alpha :as s]
-            [failjure.core :refer [fail]]))
+            [failjure.core :refer [fail try* if-let-failed?]]))
 
 (defn deep-merge [a b]
   (merge-with (fn [x y]
@@ -31,7 +31,12 @@
   [e msg]
   (fail (str msg ": " {:cause e})))
 
-(defn spec->failjure [spec data]
-  (if (s/valid? spec data)
-    data
-    (fail (s/explain-str spec data))))
+(defn spec->failjure
+  ([spec data]
+   (if (s/valid? spec data)
+       data
+       (fail (s/explain-str spec data))))
+  ([spec data parse-fn]
+   (if-let-failed? [parsed-data (try* (parse-fn data))]
+     (fail parsed-data)
+     (spec->failjure spec parsed-data))))

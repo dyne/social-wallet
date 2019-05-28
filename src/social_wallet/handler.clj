@@ -163,15 +163,19 @@
                   {:keys [auth]} :session}
         (f/attempt-all
          ;; TODO: specs dont work
-         [parsed-amount (u/spec->failjure ::amount (BigDecimal. amount))
+         [parsed-amount (log/spy (u/spec->failjure ::amount amount #(BigDecimal. %)))
           parsed-to (u/spec->failjure ::to to)
-          parsed-tags (u/spec->failjure ::tags (clojure.string/split tags #","))]
-         ;; TODO: check balance before transaction
-         (do (swapi/sendto (c/get-swapi-params) {:amount amount
-                                                 :to to
-                                                 :from (:email auth) 
-                                                 :tags parsed-tags})
-             (web/render-wallet auth (c/get-swapi-params)))
+          parsed-tags (u/spec->failjure ::tags tags #(clojure.string/split % #","))
+          sender-balance (swapi/balance (c/get-swapi-params) {:account-id (:email auth)})]
+         (if (or
+              (>= (- sender-balance parsed-amount) 0)
+              (some #{:admin} (:flags (auth/get-account authenticator (:email auth)))))
+           (do (swapi/sendto (c/get-swapi-params) {:amount amount
+                                                      :to to
+                                                      :from (:email auth) 
+                                                      :tags parsed-tags})
+               (web/render-wallet auth (c/get-swapi-params)))
+           (web/render-error-page "Not enough funds to make a transaction."))
          (f/when-failed [e]
            ;; TODO: make it appear in form
            (web/render-error-page

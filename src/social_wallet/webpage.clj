@@ -326,17 +326,6 @@
                 [:td (:created-by t)]
                 [:td (:created t)]])))]])
 
-#_(defn render-transaction-page [account swapi-params]
-  {:headers {"Content-Type"
-             "text/html; charset=utf-8"}
-   :body (page/html5
-          (render-head)
-          [:body ;; {:class "static"}
-           (navbar-account account)
-           [:div {:class "table-list"}
-            (render-transactions nil swapi-params)]
-           (render-footer)])})
-
 (defn render-wallet [account swapi-params]
   (let [email (:email account)]
     {:headers {"Content-Type"
