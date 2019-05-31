@@ -88,8 +88,10 @@
                   :json (json/write-str
                          (cond-> {:connection "mongo"
                                   :type "db-only"}
-                           (:account params) (assoc :account-id (:account params))))
-                  :body-parse-fn #(-> % :body (json/read-str :key-fn keyword) :transactions)}))
+                           (:account params) (assoc :account-id (:account params))
+                           (:page params) (assoc :page (:page params))
+                           (:per-page params) (assoc :page (:per-page params))))
+                  :body-parse-fn #(-> % :body (json/read-str :key-fn keyword))}))
 
 (defn list-tags [swapi-params params]
   (swapi-request {:swapi-params swapi-params

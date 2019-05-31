@@ -269,26 +269,43 @@
           (yaml/generate-string data)]]
    [:script "hljs.initHighlightingOnLoad();"]])
 
-(defn render-transactions [account swapi-params]
-  [:table.func--transactions-page--table.table.table-striped
-   [:thead
-    [:tr
-     ;; TODO: from transation
-     [:th "From"]
-     [:th "To"]
-     [:th "Amount"]
-     [:th "Time"]
-     [:th "Tags"]]]
-   [:tbody
-    (let [transactions (swapi/list-transactions swapi-params (cond-> {}
-                                                               account (assoc :account (:email account))))]
-      (doall (for [t transactions]
-               [:tr
-                [:td (:from-id t)]
-                [:td (:to-id t)]
-                [:td (:amount-text t)]
-                [:td (:timestamp t)]
-                [:td (interpose ", " (:tags t))]])))]])
+(defn render-pagination
+  [total current]
+  (let [start-page 1
+        per-page 10]
+    [:nav
+     [:ul.pagination.justify-content-end
+      ;; TODO: for now 10 per page fixed, maybe config
+      ;; +1 because range starts from 0 and + 1 because per-page fits x times in total but we need x+1 pages
+      (for [p (range start-page (+ 2 (quot total per-page)))]
+        (if (= (log/spy current) p)
+          [:li.page-item.active [:a.page-link {:href "#"} p]]
+          [:li.page-item [:a.page-link {:href (str "/transactions?page=" p)} p]]))]]))
+
+(defn render-transactions [account swapi-params query-params]
+  (let [response (swapi/list-transactions swapi-params (cond-> {}
+                                                         account (assoc :account (:email account))))
+        transactions (:transactions response)
+        total (:total-count response)]
+    [:div
+     [:table.func--transactions-page--table.table.table-striped
+      [:thead
+       [:tr
+        ;; TODO: from transation
+        [:th "From"]
+        [:th "To"]
+        [:th "Amount"]
+        [:th "Time"]
+        [:th "Tags"]]]
+      [:tbody
+       (doall (for [t transactions]
+                [:tr
+                 [:td (:from-id t)]
+                 [:td (:to-id t)]
+                 [:td (:amount-text t)]
+                 [:td (:timestamp t)]
+                 [:td (interpose ", " (:tags t))]]))]]
+     (render-pagination total (or (:page query-params) 1))])) 
 
 (defn render-participants [swapi-params]
   [:table.func--transactions-page--table.table.table-striped
@@ -353,7 +370,7 @@
                  balance]
                 (render-error balance))
               [:div
-               (render-transactions account swapi-params)]]
+               (render-transactions account swapi-params {})]]
              (render-footer)])}))
 
 (defonce render-sendto

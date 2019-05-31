@@ -83,9 +83,14 @@
              (redirect "/login"))
            (web/render-error-page (f/message auth-resp)))))
   (GET "/transactions" request
-       (let [{{:keys [auth]} :session} request]
+       (let [{{:keys [auth]} :session} (log/spy request)
+             {:keys [page per-page]} request]
          (f/if-let-ok? [auth-resp (logged-in? auth)]
-           (web/render auth (web/render-transactions auth (c/get-swapi-params)))
+           (web/render auth (web/render-transactions auth
+                                                     (c/get-swapi-params)
+                                                     (cond-> {}
+                                                       page (assoc :page page)
+                                                       per-page (assoc :per-page per-page))))
            (web/render-error-page (f/message auth-resp)))))
   (GET "/participants" request
        (let [{{:keys [auth]} :session} request]
