@@ -278,12 +278,13 @@
       ;; TODO: for now 10 per page fixed, maybe config
       ;; +1 because range starts from 0 and + 1 because per-page fits x times in total but we need x+1 pages
       (for [p (range start-page (+ 2 (quot total per-page)))]
-        (if (= (log/spy current) p)
+        (if (= (str current) (str p))
           [:li.page-item.active [:a.page-link {:href "#"} p]]
           [:li.page-item [:a.page-link {:href (str "/transactions?page=" p)} p]]))]]))
 
 (defn render-transactions [account swapi-params query-params]
   (let [response (swapi/list-transactions swapi-params (cond-> {}
+                                                         query-params (merge query-params)
                                                          account (assoc :account (:email account))))
         transactions (:transactions response)
         total (:total-count response)]

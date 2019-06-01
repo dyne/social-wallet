@@ -83,8 +83,8 @@
              (redirect "/login"))
            (web/render-error-page (f/message auth-resp)))))
   (GET "/transactions" request
-       (let [{{:keys [auth]} :session} (log/spy request)
-             {:keys [page per-page]} request]
+       (let [{{:keys [auth]} :session} request
+             {{:keys [page per-page]} :params} request]
          (f/if-let-ok? [auth-resp (logged-in? auth)]
            (web/render auth (web/render-transactions auth
                                                      (c/get-swapi-params)
@@ -168,7 +168,7 @@
                   {:keys [auth]} :session}
         (f/attempt-all
          ;; TODO: specs dont work
-         [parsed-amount (log/spy (u/spec->failjure ::amount amount #(BigDecimal. %)))
+         [parsed-amount (u/spec->failjure ::amount amount #(BigDecimal. %))
           parsed-to (u/spec->failjure ::to to)
           parsed-tags (u/spec->failjure ::tags tags #(clojure.string/split % #","))
           sender-balance (swapi/balance (c/get-swapi-params) {:account-id (:email auth)})]
