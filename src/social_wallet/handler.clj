@@ -79,7 +79,7 @@
               {:keys [email]} :route-params} request]
          (f/if-let-ok? [auth-resp (logged-in? auth)]
            (if (and auth (= (:email auth) email))
-             (web/render-wallet auth (c/get-swapi-params))
+             (web/render-wallet auth (c/get-swapi-params) (:uri request))
              (redirect "/login"))
            (web/render-error-page (f/message auth-resp)))))
   (GET "/transactions" request
@@ -90,7 +90,8 @@
                                                      (c/get-swapi-params)
                                                      (cond-> {}
                                                        page (assoc :page page)
-                                                       per-page (assoc :per-page per-page))))
+                                                       per-page (assoc :per-page per-page))
+                                                     (:uri request)))
            (web/render-error-page (f/message auth-resp)))))
   (GET "/participants" request
        (let [{{:keys [auth]} :session} request]
@@ -98,9 +99,14 @@
            (web/render auth (web/render-participants (c/get-swapi-params)))
            (web/render-error-page (f/message auth-resp)))))
   (GET "/tags" request
-       (let [{{:keys [auth]} :session} request]
+       (let [{{:keys [auth]} :session} request
+             {{:keys [page per-page]} :params} request]
          (f/if-let-ok? [auth-resp (logged-in? auth)]
-           (web/render auth (web/render-tags (c/get-swapi-params)))
+           (web/render auth (web/render-tags (c/get-swapi-params)
+                                             (cond-> {}
+                                                       page (assoc :page page)
+                                                       per-page (assoc :per-page per-page))
+                                             (:uri request)))
            (web/render-error-page (f/message auth-resp)))))
   (GET "/signup" request
        (web/render web/signup-form))
@@ -178,8 +184,10 @@
            (do (swapi/sendto (c/get-swapi-params) {:amount amount
                                                       :to to
                                                       :from (:email auth) 
-                                                      :tags parsed-tags})
-               (web/render-wallet auth (c/get-swapi-params)))
+                                                   :tags parsed-tags})
+               ;; TODO: here we dont need the uri cause there is no paging needed.
+               ;; However passing nil is pretty bad
+               (web/render-wallet auth (c/get-swapi-params) nil))
            (web/render-error-page "Not enough funds to make a transaction."))
          (f/when-failed [e]
            ;; TODO: make it appear in form

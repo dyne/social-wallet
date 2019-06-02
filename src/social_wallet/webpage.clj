@@ -270,7 +270,7 @@
    [:script "hljs.initHighlightingOnLoad();"]])
 
 (defn render-pagination
-  [total current]
+  [total current uri]
   (let [start-page 1
         per-page 10]
     [:nav
@@ -280,9 +280,9 @@
       (for [p (range start-page (+ 2 (quot total per-page)))]
         (if (= (str current) (str p))
           [:li.page-item.active [:a.page-link {:href "#"} p]]
-          [:li.page-item [:a.page-link {:href (str "/transactions?page=" p)} p]]))]]))
+          [:li.page-item [:a.page-link {:href (str uri "?page=" p)} p]]))]]))
 
-(defn render-transactions [account swapi-params query-params]
+(defn render-transactions [account swapi-params query-params uri]
   (let [response (swapi/list-transactions swapi-params (cond-> {}
                                                          query-params (merge query-params)
                                                          account (assoc :account (:email account))))
@@ -306,7 +306,8 @@
                  [:td (:amount-text t)]
                  [:td (:timestamp t)]
                  [:td (interpose ", " (:tags t))]]))]]
-     (render-pagination total (or (:page query-params) 1))])) 
+     (when (= uri "/transactions")
+       (render-pagination total (or (:page query-params) 1) uri))])) 
 
 (defn render-participants [swapi-params]
   [:table.func--transactions-page--table.table.table-striped
@@ -324,27 +325,29 @@
                 [:td (:email p)]
                 [:td (interpose ", " (:other-names p))]])))]])
 
-(defn render-tags [swapi-params]
-  [:table.func--transactions-page--table.table.table-striped
-   [:thead
-    [:tr
-     ;; TODO: from transation
-     [:th "Tag"]
-     [:th "Count"]
-     [:th "Amount"]
-     [:th "Created by"]
-     [:th "Created"]]]
-   [:tbody
-    (let [tags (swapi/list-tags swapi-params {})]
-      (doall (for [t tags]
-               [:tr
-                [:td (:tag t)]
-                [:td (:count t)]
-                [:td (:amount t)]
-                [:td (:created-by t)]
-                [:td (:created t)]])))]])
+(defn render-tags [swapi-params query-params uri]
+  [:div [:table.func--transactions-page--table.table.table-striped
+         [:thead
+          [:tr
+           ;; TODO: from transation
+           [:th "Tag"]
+           [:th "Count"]
+           [:th "Amount"]
+           [:th "Created by"]
+           [:th "Created"]]]
+         [:tbody
+          (let [tags (swapi/list-tags swapi-params {})]
+            (doall (for [t tags]
+                     [:tr
+                      [:td (:tag t)]
+                      [:td (:count t)]
+                      [:td (:amount t)]
+                      [:td (:created-by t)]
+                      [:td (:created t)]])))]]
+     (when (= uri "/transactions")
+    (render-pagination total (or (:page query-params) 1) uri))])
 
-(defn render-wallet [account swapi-params]
+(defn render-wallet [account swapi-params uri]
   (let [email (:email account)]
     {:headers {"Content-Type"
                "text/html; charset=utf-8"}
@@ -371,7 +374,7 @@
                  balance]
                 (render-error balance))
               [:div
-               (render-transactions account swapi-params {})]]
+               (render-transactions account swapi-params {} uri)]]
              (render-footer)])}))
 
 (defonce render-sendto
