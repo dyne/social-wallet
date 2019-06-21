@@ -343,9 +343,7 @@
                       [:td (:count t)]
                       [:td (:amount t)]
                       [:td (:created-by t)]
-                      [:td (:created t)]])))]]
-     (when (= uri "/transactions")
-    (render-pagination total (or (:page query-params) 1) uri))])
+                      [:td (:created t)]])))]]])
 
 (defn render-wallet [account swapi-params uri]
   (let [email (:email account)]
