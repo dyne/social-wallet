@@ -26,7 +26,7 @@
 
             [mount.core :as mount]
             [taoensso.timbre :as log])
-  
+
   (:import [org.jsoup Jsoup]
            [org.jsoup.nodes Document]
            [org.jsoup Connection$Method Connection$Response]))
@@ -60,7 +60,7 @@
                                        (.select "[placeholder$=Name]")
                                        first
                                        (.id))
-                                   => "signup-name")
+                                   => "name")
                                  (let [response (->
                                                  (Jsoup/connect "http://localhost:3001/signup")
                                                  (.userAgent "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.152 Safari/537.36")
@@ -70,12 +70,12 @@
                                                  (.data "password" (:password user-data))
                                                  (.data "repeat-password" (:password user-data))
                                                  (.data "sing-up-submit" "Sign up")
-                                                  (.post))]
+                                                 (.post))]
                                    (-> response
                                        (.select "body")
-                                       (.select "div.container-fluid")
+                                       (.select "div")
                                        (.select "h2")
-                                       (.text)) => (str "Account created: " (:name user-data) " <"(:email user-data) ">")))
+                                       (.text)) => (str "Account created: " (:name user-data) " <" (:email user-data) ">")))
 
                            (fact "Activate it"
                                  (let [activation-uri (:activation-link (storage/fetch (-> stores/stores :account-store)
@@ -83,7 +83,7 @@
                                        response (.get (Jsoup/connect activation-uri))]
                                    (-> response
                                        (.select "body")
-                                       (.select "div.container-fluid")
+                                       (.select "h1")
                                        (.text))
                                    => (str "Account activated - " (:email user-data))))
 
@@ -98,22 +98,23 @@
                                                  (.post))]
                                    (-> response
                                        (.select "div.balance")
+                                       (.select "h2")
                                        (.text))
-                                   => "Balance: 0"))
+                                   =>  "0"))
 
                            (fact "Log out"
                                  (let [response (.get (Jsoup/connect "http://localhost:3001/logout"))]
                                    (-> response
                                        (.select "body")
-                                       (.select "div.container-fluid")
+                                       (.select "div.card-title")
                                        (.text))
-                                   => "Logged out."))
+                                   => "Login"))
 
                            (fact "Cannot access the wallet page if not logged in - redirected to login"
                                  (let [response (.get (Jsoup/connect (str "http://localhost:3001/wallet/" (:email user-data))))]
                                    (-> response
                                        (.select "body")
-                                       (.select "div.container-fluid")
+                                       (.select "div")
                                        (.select "div.alert")
                                        (.text))
                                    => "Error:Please log in to be able to access this info"))))
