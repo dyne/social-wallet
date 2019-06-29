@@ -36,7 +36,7 @@
 (def welcome-html (str "<h1>Welcome to the Social Wallet</h1>\n"
                           "<p>" #_request "</p>"))
 (defn get-host [request] (str
-                          (name (get request :scheme))
+                          (name (log/spy (get (log/spy request) :scheme)))
                           "://"
                           (get-in request [:headers "host"])))
 
@@ -148,9 +148,9 @@
           [:div
            (f/if-let-failed?
                [act (auth/activate-account
-                      authenticator
+                     authenticator
                      email
-                     {:activation-link activation-uri})]
+                     {:activation-link (log/spy activation-uri)})]
              (web/render-error
               [:div
                [:h1 "Failure activating account"]
