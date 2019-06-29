@@ -26,7 +26,9 @@
             [social-wallet.server]))
 
 (defn parse-args [args]
-  (let [opts [["-p" "--port [webapp port]" "Web app port"
+  (let [opts [["-ho" "--host [webapp host]" "Web app host"
+               :default "http://localhost"]
+              ["-p" "--port [webapp port]" "Web app port"
                :default 3001
                :parse-fn #(Integer/parseInt %)
                :validate [#(< 0 % 0x10000) "Must be a number between 0 and 65536"]]
@@ -51,4 +53,4 @@
 
 
 (comment
-  (mount/start-with-args {:port 3001 :config "config.yaml" :with-apikey true}))
+  (mount/start-with-args {:port 3001 :config "config.yaml" :with-apikey true :host "http://localhost"}))

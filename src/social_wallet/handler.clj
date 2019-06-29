@@ -21,6 +21,7 @@
             [ring.util.response :refer [redirect]]
 
             [failjure.core :as f]
+            [mount.core :as mount]
 
             [social-wallet.webpage :as web]
             [social-wallet.qrcode :as qrcode]
@@ -35,10 +36,7 @@
 
 (def welcome-html (str "<h1>Welcome to the Social Wallet</h1>\n"
                           "<p>" #_request "</p>"))
-(defn get-host [request] (str
-                          (name (log/spy (get (log/spy request) :scheme)))
-                          "://"
-                          (get-in request [:headers "host"])))
+(defn get-host [request] (str (:host (log/spy (mount/args))) ":" (:port (mount/args))))
 
 (defn logged-in? [session-auth]
   (if session-auth
@@ -150,7 +148,7 @@
                [act (auth/activate-account
                      authenticator
                      email
-                     {:activation-link (log/spy activation-uri)})]
+                     {:activation-link activation-uri})]
              (web/render-error
               [:div
                [:h1 "Failure activating account"]
