@@ -42,7 +42,7 @@
                     (facts "Check that the app state is loaded properly"
                            (fact "check that the email throtling config is properly read"
                                  (-> c/config :just-auth :throttling)
-                                 => {:criteria #{:email, :ip-address} 
+                                 => {:criteria #{:email, :ip-address}
                                      :type :block
                                      :time-window-secs 3600
                                      :threshold 1000}))
@@ -51,5 +51,5 @@
                                  (let [response (.get (Jsoup/connect "http://localhost:3001/"))]
                                    (-> response
                                        (.select "body")
-                                       (.select "h1")
-                                       (.text)) => "Welcome to the Social Wallet"))))
+                                       (.select "div.card-title")
+                                       (.text)) => "Login"))))
