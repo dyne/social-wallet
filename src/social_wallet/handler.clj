@@ -41,11 +41,6 @@
 
             [taoensso.timbre :as log]))
 
-(def welcome-html (str "<h1>Welcome to the Social Wallet</h1>\n"
-                       "<p>" #_request "</p>"))
-
-(def logged-html (str "<h1>Welcome to the Social Wallet</h1>\n"
-                      "<p>" #_request "</p>"))
 
 (defn get-host [request] (str
                           (name (get request :scheme))
@@ -80,8 +75,8 @@
     (if (and auth (auth/get-account authenticator auth))
       (web/render auth
                   [:div
-                   [:h1 (str "Already logged in with account: " auth)]
-                   [:h2 [:a {:href "/logout"} "Logout"]]])
+                   [:div.toast.toast-warning (str "Already logged in with account: " (:email auth))]
+                   [:a.btn.btn-primary {:href "/logout" :style "margin-top: 16px"} "Logout"]])
       (web/render login-form)))
 
 

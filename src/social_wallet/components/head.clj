@@ -23,7 +23,7 @@
     ;; javascript scripts
     ; (page/include-js  "/static/js/jquery-3.2.1.min.js")
     ; (page/include-js  "/static/js/bootstrap.min.js")
-
+    
     ;; cascade style sheets
     ; (page/include-css "/static/css/bootstrap.min.css")
     (page/include-css "/static/css/spectre.min.css")
