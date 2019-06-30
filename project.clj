@@ -74,7 +74,7 @@
                  [org.clojars.dyne/clj-storage "0.10.0" :exclusions [com.taoensso/encore
                                                                      org.clojure/tools.reader]]
                  ;; authentication library
-                 [org.clojars.dyne/just-auth "0.5.0" :exclusions [com.taoensso/encore
+                 [org.clojars.dyne/just-auth "0.6.0-SNAPSHOT" :exclusions [com.taoensso/encore
                                                                   org.clojure/tools.reader]]]
 
 

@@ -21,6 +21,7 @@
             [ring.util.response :refer [redirect]]
 
             [failjure.core :as f]
+            [mount.core :as mount]
 
             [social-wallet.webpage :as web]
             [social-wallet.qrcode :as qrcode]
@@ -41,11 +42,9 @@
 
             [taoensso.timbre :as log]))
 
-
-(defn get-host [request] (str
-                          (name (get request :scheme))
-                          "://"
-                          (get-in request [:headers "host"])))
+(def welcome-html (str "<h1>Welcome to the Social Wallet</h1>\n"
+                          "<p>" #_request "</p>"))
+(defn get-host [request] (str (:host (log/spy (mount/args))) ":" (:port (mount/args))))
 
 (defn logged-in? [session-auth]
   (if session-auth
@@ -182,10 +181,19 @@
                {:activation-link activation-uri})]
          (web/render-error
           [:div
-           [:h1 "Failure activating account"]
-           [:h2 (f/message act)]
-           [:p (str "Email: " email " activation-id: " activation-id)]])
-         [:h1 (str "Account activated - " email)])])))
+           (f/if-let-failed?
+            [act (auth/activate-account
+                  authenticator
+                  email
+                  {:activation-link activation-uri})]
+            (web/render-error
+             [:div
+              [:h1 "Failure activating account"]
+              [:h2 (f/message act)]
+              [:p (str "Email: " email " activation-id: " activation-id)]])
+            [:h1 (str "Account activated - " email)]
+            )]
+          ))])))
 
 
   (GET "/qrcode/:email"
