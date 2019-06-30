@@ -75,8 +75,8 @@
     (if (and auth (auth/get-account authenticator auth))
       (web/render auth
                   [:div
-                   [:h1 (str "Already logged in with account: " auth)]
-                   [:h2 [:a {:href "/logout"} "Logout"]]])
+                   [:div.toast.toast-warning (str "Already logged in with account: " (:email auth))]
+                   [:a.btn.btn-primary {:href "/logout" :style "margin-top: 16px"} "Logout"]])
       (web/render login-form)))
 
 
@@ -192,14 +192,18 @@
 
 
   (GET "/logout" request
-       (conj {:session nil}
-             (web/render [:h1 "Logged out."])))
-  (GET "/sendto/:email" request
-       (let [{{:keys [auth]} :session} request
-             {:keys [email]} request]
-         (f/if-let-ok? [auth-resp (logged-in? auth)]
-           (web/render auth render-sendTo)
-           (web/render-error-page (f/message auth-resp)))))
+    (conj {:session nil}
+          ; (web/render [:h1 "Logged out."])
+          (redirect "/")))
+
+
+  (GET "/sendto" request
+    (let [{{:keys [auth]} :session} request]
+      (f/if-let-ok? [auth-resp (logged-in? auth)]
+                    (web/render auth render-sendTo)
+                    (web/render-error-page (f/message auth-resp)))))
+
+
   (POST "/sendto" {{:keys [amount to tags]} :params
                    {:keys [auth]} :session}
     (f/attempt-all
