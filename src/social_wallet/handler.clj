@@ -202,6 +202,23 @@
           (redirect "/")))
 
 
+
+  (GET "/admin-panel" request
+    (let [{{:keys [auth]} :session} request]
+      (f/if-let-ok? [auth-resp (logged-in? auth)]
+                    (if (some #{:admin} (:flags (auth/get-account authenticator (:email auth))))
+                                  (web/render auth [:h1 "Cool you're an admin..."])
+                                  (web/render auth (f/message "Oops, only admins can visit this page...")))
+                    (web/render-error-page (f/message auth-resp)))))
+  
+
+ (GET "/participants" request
+    (let [{{:keys [auth]} :session} request]
+      (f/if-let-ok? [auth-resp (logged-in? auth)]
+                    (web/render auth (render-participants (c/get-swapi-params)))
+                    (web/render-error-page (f/message auth-resp)))))
+
+
   (GET "/sendto" request
     (let [{{:keys [auth]} :session} request]
       (f/if-let-ok? [auth-resp (logged-in? auth)]
