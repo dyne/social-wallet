@@ -1,5 +1,8 @@
 (ns social-wallet.components.header
-  (:require [auxiliary.translation :as t]))
+  (:require
+   [just-auth.core :as auth]
+   [social-wallet.authenticator :refer [authenticator]]
+   [auxiliary.translation :as t]))
 
 
 (def header-guest
@@ -28,9 +31,17 @@
     (t/locale [:navbar :tags])]
    [:div.dropdown
     [:a.btn.btn-link.dropdown-toggle {:href "#" :tabIndex "0"}
-     [:i.icon.icon-menu]
-     ]
+     [:i.icon.icon-menu]]
     [:ul.menu
+     
+     (if
+      (some #{:admin} (:flags (auth/get-account authenticator (:email account))))
+       [:div
+        [:li.divider {:data-content "ADMIN"}]
+        [:li.menu-item
+         [:a {:href "/admin-panel"} (t/locale [:navbar :admin])]]]
+       [:div])
+     [:li.divider {:data-content "GENERAL"}]
      [:li.menu-item
       [:a {:href "/app-state"} (t/locale [:navbar :conf])]]
      [:li.menu-item
@@ -39,57 +50,3 @@
     ]]])
    
    
-;    <div class= "dropdown" >
-; <a href= "#" class= "btn btn-link dropdown-toggle" tabindex= "0" >
-; dropdown menu <i class= "icon icon-caret" ></i>
-; </a>
-; <!-- menu component -->
-; <ul class= "menu" >
-; ...
-; </ul>
-; </div>
-
-; <!-- dropdown button group -->
-; <div class= "dropdown" >
-; <div class= "btn-group" >
-; <a href= "#" class= "btn" >
-; dropdown button
-; </a>
-; <a href= "#" class= "btn dropdown-toggle" tabindex= "0" >
-; <i class= "icon icon-caret" ></i>
-; </a>
-
-; <!-- menu component -->
-; <ul class= "menu" >
-; ...
-; </ul>
-; </div>
-; </div>
-   
-   
-;    [:div {:class "collapse navbar-collapse" :id "navbarResponsive"}
-;     [:ul {:class "nav navbar-nav hidden-sm hidden-md ml-auto"}
-;       ;; --
-;      [:li {:class "divider" :role "separator"}]
-;      [:li {:role "separator" :class "divider"}]
-;      [:li {:class "nav-item"}
-;       [:a {:class "nav-link far fa-file-code"
-;            :href "/app-state"} (t/locale [:navbar :conf])]]
-;      ; [:li {:class "nav-item"}
-;      ;  [:a {:class "nav-link far fa-file-code"
-;      ;       :href (str "/wallet/" (:email account))} (t/locale [:navbar :my-wallet])]]
-;      ; [:li {:class "nav-item"}
-;      ;  [:a {:class "nav-link far fa-file-code"
-;      ;       :href "/sendto"} (t/locale [:wallet :send])]]
-;      ; [:li {:class "nav-item"}
-;      ;  [:a {:class "nav-link far fa-file-code"
-;      ;       :href "/transactions"} (t/locale [:navbar :transactions])]]
-;      ; [:li {:class "nav-item"}
-;      ;  [:a {:class "nav-link far fa-file-code"
-;      ;       :href "/participants"} (t/locale [:navbar :participants])]]
-;      ; [:li {:class "nav-item"}
-;      ;  [:a {:class "nav-link far fa-file-code"
-;      ;       :href "/tags"} (t/locale [:navbar :tags])]]
-;      [:li {:class "nav-item"}
-;       [:a {:class "nav-link far fa-file-code"
-;            :href "/logout"} (t/locale [:navbar :log-out])]]]]])
