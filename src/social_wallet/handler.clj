@@ -181,19 +181,10 @@
                {:activation-link activation-uri})]
          (web/render-error
           [:div
-           (f/if-let-failed?
-            [act (auth/activate-account
-                  authenticator
-                  email
-                  {:activation-link activation-uri})]
-            (web/render-error
-             [:div
-              [:h1 "Failure activating account"]
-              [:h2 (f/message act)]
-              [:p (str "Email: " email " activation-id: " activation-id)]])
-            [:h1 (str "Account activated - " email)]
-            )]
-          ))])))
+           [:h1 "Failure activating account"]
+           [:h2 (f/message act)]
+           [:p (str "Email: " email " activation-id: " activation-id)]])
+         [:h1 (str "Account activated - " email)])])))
 
 
   (GET "/qrcode/:email"
