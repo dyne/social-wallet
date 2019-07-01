@@ -69,7 +69,7 @@
          ;; TODO: pass :ip-address in last argument map
          (let [session {:session {:auth account}}]
            (conj session
-                 (redirect (str "/wallet/" username))))
+                 (redirect (str (get-host (:link-port (mount/args))) "/wallet/" username))))
          (f/when-failed [e]
            (web/render-error-page
             (str "Login failed: " (f/message e))))))
@@ -158,7 +158,7 @@
              [:h1 (str "Account activated - " email)])])))
   (GET "/qrcode/:email"
        [email :as request]
-       (qrcode/transact-to email  (get-host request)))
+       (qrcode/transact-to email  (get-host (:link-port (mount/args)))))
   (GET "/session" request
        (-> (:session request) web/render-yaml web/render))
   (GET "/logout" request
