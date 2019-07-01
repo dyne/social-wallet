@@ -37,6 +37,7 @@
 (def server (atom nil))
 
 (against-background [(before :contents (mount/start-with-args {:port 3001
+                                                               :link-port 3001
                                                                :stub-email true
                                                                :with-apikey false
                                                                :config "test-resources/config.yaml"}))

@@ -35,8 +35,9 @@
             [taoensso.timbre :as log]))
 
 (def welcome-html (str "<h1>Welcome to the Social Wallet</h1>\n"
-                          "<p>" #_request "</p>"))
-(defn get-host [request] (str (:host (log/spy (mount/args))) ":" (:port (mount/args))))
+                       "<p>" #_request "</p>"))
+
+(defn get-host [port] (str (:host (mount/args)) ":" port))
 
 (defn logged-in? [session-auth]
   (if session-auth
@@ -114,7 +115,7 @@
           email (-> request :params :email)
           password (-> request :params :password)
           repeat-password (-> request :params :repeat-password)
-          activation {:activation-uri (get-host request)}]
+          activation {:activation-uri (get-host (:link-port (mount/args)))}]
          (web/render
           (if (= password repeat-password)
             (f/try*
@@ -140,7 +141,7 @@
   (GET "/activate/:email/:activation-id"
        [email activation-id :as request]
        (let [activation-uri
-             (str (get-host request)
+             (str (get-host (:link-port (mount/args)))
                   "/activate/" email "/" activation-id)]
          (web/render
           [:div

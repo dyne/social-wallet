@@ -32,6 +32,10 @@
                :default 3001
                :parse-fn #(Integer/parseInt %)
                :validate [#(< 0 % 0x10000) "Must be a number between 0 and 65536"]]
+              ["-l" "--link-port [two-authentication link port]" "Authentication links might use a different port than the actual port that the app uses. The reason for this is possible port forwarding (eg. SSL)"
+               :default 3001
+               :parse-fn #(Integer/parseInt %)
+               :validate [#(< 0 % 0x10000) "Must be a number between 0 and 65536"]]
               ["-c" "--config [config file]" "The app config file path"
                :default "config.yaml"]
               ["-s" "--stub-email [stub email]" "Stub email?"
@@ -53,4 +57,4 @@
 
 
 (comment
-  (mount/start-with-args {:port 3001 :config "config.yaml" :with-apikey true :host "http://localhost"}))
+  (mount/start-with-args {:port 3001 :config "config.yaml" :with-apikey true :host "http://localhost" :link-port 3001}))
