@@ -208,7 +208,7 @@
          [parsed-amount (u/spec->failjure ::amount amount #(BigDecimal. %))
           parsed-to (u/spec->failjure ::to to)
           parsed-tags (u/spec->failjure ::tags tags #(clojure.string/split % #","))
-          sender-balance (swapi/balance (c/get-swapi-params) {:account-id (:email auth)})]
+          sender-balance (swapi/balance (c/get-swapi-params) {:email (:email auth)})]
          (if (or
               (>= (- sender-balance parsed-amount) 0)
               (some #{:admin} (:flags (auth/get-account authenticator (:email auth)))))
