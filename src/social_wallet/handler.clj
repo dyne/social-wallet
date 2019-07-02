@@ -42,10 +42,7 @@
 
             [taoensso.timbre :as log]))
 
-(defn get-host [request] (str
-                          (name (get request :scheme))
-                          "://"
-                          (get-in request [:headers "host"])))
+(defn get-host [port] (str (:host (mount/args)) ":" port))
 
 (defn logged-in? [session-auth]
   (if session-auth
