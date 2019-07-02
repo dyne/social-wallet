@@ -31,6 +31,9 @@
             [social-wallet.util :as u]
             [social-wallet.components.transactions_list :refer [transactions]]
             [social-wallet.components.participants_list :refer [render-participants]]
+            [social-wallet.components.admin :refer [render-admin-panel]]
+            [social-wallet.components.admin_edit :refer [render-edit-account-panel]]
+
             [social-wallet.components.tag :refer [render-tags]]
             [social-wallet.components.sendTo :refer [render-sendTo]]
             [social-wallet.components.login :refer [login-form]]
@@ -207,12 +210,27 @@
     (let [{{:keys [auth]} :session} request]
       (f/if-let-ok? [auth-resp (logged-in? auth)]
                     (if (some #{:admin} (:flags (auth/get-account authenticator (:email auth))))
-                                  (web/render auth [:h1 "Cool you're an admin..."])
-                                  (web/render auth (f/message "Oops, only admins can visit this page...")))
+                      (web/render auth (render-admin-panel (c/get-swapi-params)))
+                      (web/render auth (f/message "Oops, only admins can visit this page...")))
                     (web/render-error-page (f/message auth-resp)))))
   
 
- (GET "/participants" request
+  (GET "/admin-panel/edit/:email" request
+    (let [{{:keys [auth]} :session
+           {:keys [email]} :route-params}
+          request]
+      (f/if-let-ok? [auth-resp (logged-in? auth)]
+                    (if (some #{:admin} (:flags (auth/get-account authenticator (:email auth))))
+                      (web/render auth (render-edit-account-panel email))
+                      (web/render auth (f/message "Oops, only admins can visit this page...")))
+                    (web/render-error-page (f/message auth-resp)))))
+  
+
+  
+  ; (POST "/admin-panel/edit/:email" {{:keys [email]} :route-params})
+
+  
+  (GET "/participants" request
     (let [{{:keys [auth]} :session} request]
       (f/if-let-ok? [auth-resp (logged-in? auth)]
                     (web/render auth (render-participants (c/get-swapi-params)))

@@ -23,5 +23,5 @@
                 (if (some #{"admin"} (:flags p)) 
                   [:td]
                   [:td
-                   [:a.btn.btn-action {:href (str "/admin-panel/edit/" (:email p)) :style "margin-right: 8px"} [:i.icon.icon-edit]]]
+                   [:a.btn.btn-action.tooltip.tooltip-left {:data-tooltip "Edit account" :href (str "/admin-panel/edit/" (:email p)) :style "margin-right: 8px"} [:i.icon.icon-edit]]]
                   )])))]])
