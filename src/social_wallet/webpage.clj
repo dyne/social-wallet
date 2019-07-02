@@ -24,18 +24,8 @@
             [social-wallet.components.footer :refer [footer]]
             [social-wallet.components.head :refer [render-head]]
 
-            [social-wallet.components.transactions_list :refer [transactions]]
             [hiccup.page :as page]
             [hiccup.form :as hf]
-            [hiccup.util :as hu]
-
-            [clavatar.core :as clavatar]
-
-            [auxiliary.translation :as t]
-            [just-auth.core :as auth]
-
-            [social-wallet.swapi :as swapi]
-            [social-wallet.authenticator :refer [authenticator]]
 
             [failjure.core :as f]))
 
