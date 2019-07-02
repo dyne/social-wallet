@@ -29,86 +29,110 @@
             [social-wallet.authenticator :refer [authenticator]]
             [social-wallet.swapi :as swapi]
             [social-wallet.util :as u]
+            [social-wallet.components.transactions_list :refer [transactions]]
+            [social-wallet.components.participants_list :refer [render-participants]]
+            [social-wallet.components.tag :refer [render-tags]]
+            [social-wallet.components.sendTo :refer [render-sendTo]]
+            [social-wallet.components.login :refer [login-form]]
+            [social-wallet.components.signup :refer [signup-form]]
+
+            [social-wallet.pages.wallet :refer [wallet-page]]
 
             [just-auth.core :as auth]
 
             [taoensso.timbre :as log]))
-
-(def welcome-html (str "<h1>Welcome to the Social Wallet</h1>\n"
-                       "<p>" #_request "</p>"))
 
 (defn get-host [port] (str (:host (mount/args)) ":" port))
 
 (defn logged-in? [session-auth]
   (if session-auth
     true
-    (f/fail "Please log in to be able to access this info") ))
+    (f/fail "Please log in to be able to access this info")))
 
 (defroutes app-routes
-  (GET "/" {{:keys [auth]} :session}
-       (web/render auth welcome-html))
+
+  (GET "/" request
+    (let [{{:keys [auth]} :session}  request]
+      (if (and auth (auth/get-account authenticator auth))
+        (wallet-page auth (c/get-swapi-params) (:uri request))
+        (web/render login-form))))
+
+
   (GET "/app-state" {{:keys [auth]} :session}
-       (web/render auth
-        [:div
-         [:h1 "Config Keys loaded"]
-         [:ul (for [[x _] config] [:li x])]]))
+    (web/render auth
+                [:div
+                 [:h1 "Config Keys loaded"]
+                 [:ul (for [[x _] config] [:li x])]]))
+
+
   ;; TODO: change conf (POST app-state)
   (GET "/login" {{:keys [auth]} :session
                  {:keys [mime language]} :accept}
-       (if (and auth (auth/get-account authenticator auth))
-         (web/render auth
-                     [:div
-                      [:h1 (str "Already logged in with account: " auth)]
-                      [:h2 [:a {:href "/logout"} "Logout"]]])
-         (web/render web/login-form)))
+    (if (and auth (auth/get-account authenticator auth))
+      (web/render auth
+                  [:div
+                   [:div.toast.toast-warning (str "Already logged in with account: " (:email auth))]
+                   [:a.btn.btn-primary {:href "/logout" :style "margin-top: 16px"} "Logout"]])
+      (web/render login-form)))
+
+
+
   (POST "/login" request
-        (f/attempt-all
-         [username (-> request :params :username)
-          password (-> request :params :password)
-          account (auth/sign-in  authenticator username password {})]
+    (f/attempt-all
+     [username (-> request :params :username)
+      password (-> request :params :password)
+      account (auth/sign-in  authenticator username password {})]
          ;; TODO: pass :ip-address in last argument map
-         (let [session {:session {:auth account}}]
-           (conj session
-                 (redirect (str (get-host (:link-port (mount/args))) "/wallet/" username))))
-         (f/when-failed [e]
-           (web/render-error-page
-            (str "Login failed: " (f/message e))))))
+     (let [session {:session {:auth account}}]
+       (conj session
+             (redirect "/")))
+     (f/when-failed [e]
+                    (web/render-error-page
+                     (str "Login failed: " (f/message e))))))
+
+
   (GET "/wallet/:email" request
-       (let [{{:keys [auth]} :session
-              {:keys [email]} :route-params} request]
-         (f/if-let-ok? [auth-resp (logged-in? auth)]
-           (if (and auth (= (:email auth) email))
-             (web/render-wallet auth (c/get-swapi-params) (:uri request))
-             (redirect "/login"))
-           (web/render-error-page (f/message auth-resp)))))
+    (let [{{:keys [auth]} :session
+           {:keys [email]} :route-params} request]
+      (f/if-let-ok? [auth-resp (logged-in? auth)]
+                    (if (and auth (= (:email auth) email))
+                      (wallet-page auth (c/get-swapi-params) (:uri request))
+                      (redirect "/login"))
+                    (web/render-error-page (f/message auth-resp)))))
+
+
   (GET "/transactions" request
-       (let [{{:keys [auth]} :session} request
-             {{:keys [page per-page]} :params} request]
-         (f/if-let-ok? [auth-resp (logged-in? auth)]
-           (web/render auth (web/render-transactions auth
-                                                     (c/get-swapi-params)
-                                                     (cond-> {}
-                                                       page (assoc :page page)
-                                                       per-page (assoc :per-page per-page))
-                                                     (:uri request)))
-           (web/render-error-page (f/message auth-resp)))))
+    (let [{{:keys [auth]} :session} request
+          {{:keys [page per-page]} :params} request]
+      (f/if-let-ok? [auth-resp (logged-in? auth)]
+                    (web/render auth (transactions auth
+                                                   (c/get-swapi-params)
+                                                   (cond-> {}
+                                                     page (assoc :page page)
+                                                     per-page (assoc :per-page per-page))
+                                                   (:uri request)))
+                    (web/render-error-page (f/message auth-resp)))))
+
+
   (GET "/participants" request
-       (let [{{:keys [auth]} :session} request]
-         (f/if-let-ok? [auth-resp (logged-in? auth)]
-           (web/render auth (web/render-participants (c/get-swapi-params)))
-           (web/render-error-page (f/message auth-resp)))))
+    (let [{{:keys [auth]} :session} request]
+      (f/if-let-ok? [auth-resp (logged-in? auth)]
+                    (web/render auth (render-participants (c/get-swapi-params)))
+                    (web/render-error-page (f/message auth-resp)))))
   (GET "/tags" request
-       (let [{{:keys [auth]} :session} request
-             {{:keys [page per-page]} :params} request]
-         (f/if-let-ok? [auth-resp (logged-in? auth)]
-           (web/render auth (web/render-tags (c/get-swapi-params)
-                                             (cond-> {}
-                                                       page (assoc :page page)
-                                                       per-page (assoc :per-page per-page))
-                                             (:uri request)))
-           (web/render-error-page (f/message auth-resp)))))
+    (let [{{:keys [auth]} :session} request
+          {{:keys [page per-page]} :params} request]
+      (f/if-let-ok? [auth-resp (logged-in? auth)]
+                    (web/render auth (render-tags (c/get-swapi-params)
+                                                  (cond-> {}
+                                                    page (assoc :page page)
+                                                    per-page (assoc :per-page per-page))
+                                                  (:uri request)))
+                    (web/render-error-page (f/message auth-resp)))))
+
   (GET "/signup" request
-       (web/render web/signup-form))
+    (web/render signup-form))
+
   (POST "/signup" request
         (f/attempt-all
          [name (-> request :params :name)
@@ -160,24 +184,30 @@
        [email :as request]
        (qrcode/transact-to email  (get-host (:link-port (mount/args)))))
   (GET "/session" request
-       (-> (:session request) web/render-yaml web/render))
+    (-> (:session request) web/render-yaml web/render))
+
+
   (GET "/logout" request
-       (conj {:session nil}
-             (web/render [:h1 "Logged out."])))
-  (GET "/sendto/:email" request
-       (let [{{:keys [auth]} :session} request
-             {:keys [email]} request]
-         (f/if-let-ok? [auth-resp (logged-in? auth)]
-           (web/render auth web/render-sendto)
-           (web/render-error-page (f/message auth-resp)))))
+    (conj {:session nil}
+          ; (web/render [:h1 "Logged out."])
+          (redirect "/")))
+
+
+  (GET "/sendto" request
+    (let [{{:keys [auth]} :session} request]
+      (f/if-let-ok? [auth-resp (logged-in? auth)]
+                    (web/render auth render-sendTo)
+                    (web/render-error-page (f/message auth-resp)))))
+
+
   (POST "/sendto" {{:keys [amount to tags]} :params
-                  {:keys [auth]} :session}
-        (f/attempt-all
+                   {:keys [auth]} :session}
+    (f/attempt-all
          ;; TODO: specs dont work
          [parsed-amount (u/spec->failjure ::amount amount #(BigDecimal. %))
           parsed-to (u/spec->failjure ::to to)
           parsed-tags (u/spec->failjure ::tags tags #(clojure.string/split % #","))
-          sender-balance (swapi/balance (c/get-swapi-params) {:account-id (:email auth)})]
+          sender-balance (swapi/balance (c/get-swapi-params) {:email (:email auth)})]
          (if (or
               (>= (- sender-balance parsed-amount) 0)
               (some #{:admin} (:flags (auth/get-account authenticator (:email auth)))))
@@ -187,11 +217,11 @@
                                                    :tags parsed-tags})
                ;; TODO: here we dont need the uri cause there is no paging needed.
                ;; However passing nil is pretty bad
-               (web/render-wallet auth (c/get-swapi-params) nil))
-           (web/render-error-page "Not enough funds to make a transaction."))
-         (f/when-failed [e]
+           (wallet-page auth (c/get-swapi-params) nil))
+       (web/render-error-page "Not enough funds to make a transaction."))
+     (f/when-failed [e]
            ;; TODO: make it appear in form
-           (web/render-error-page
-            (str "Error in send request: " (f/message e))))))
+                    (web/render-error-page
+                     (str "Error in send request: " (f/message e))))))
   (route/resources "/")
   (route/not-found "<h1>Page not found</h1>"))
