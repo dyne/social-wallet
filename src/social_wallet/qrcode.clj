@@ -21,5 +21,5 @@
 
 (defn transact-to [email base-url]
   (qr/as-input-stream
-   (qr/from (str base-url "/send/to/" email)
+   (qr/from (str base-url "/sendto/" email)
             :charset "ISO-8859-1")))

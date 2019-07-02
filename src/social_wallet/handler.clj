@@ -164,8 +164,9 @@
   (GET "/logout" request
        (conj {:session nil}
              (web/render [:h1 "Logged out."])))
-  (GET "/sendto" request
-       (let [{{:keys [auth]} :session} request ]
+  (GET "/sendto/:email" request
+       (let [{{:keys [auth]} :session} request
+             {:keys [email]} request]
          (f/if-let-ok? [auth-resp (logged-in? auth)]
            (web/render auth web/render-sendto)
            (web/render-error-page (f/message auth-resp)))))
