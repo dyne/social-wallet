@@ -71,11 +71,11 @@
                  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Dyne libs
                  ;;
                  ;; storage lib
-                 [org.clojars.dyne/clj-storage "0.9.0" :exclusions [com.taoensso/encore
-                                                                    org.clojure/tools.reader]]
+                 [org.clojars.dyne/clj-storage "0.10.0" :exclusions [com.taoensso/encore
+                                                                     org.clojure/tools.reader]]
                  ;; authentication library
-                 [org.clojars.dyne/just-auth "0.5.0-SNAPSHOT" :exclusions [com.taoensso/encore
-                                                                           org.clojure/tools.reader]]]
+                 [org.clojars.dyne/just-auth "0.6.0-SNAPSHOT" :exclusions [com.taoensso/encore
+                                                                  org.clojure/tools.reader]]]
 
 
   :pedantic? :warn
@@ -85,12 +85,9 @@
                    "test-resources"]
   :main social-wallet.core
   
-  :profiles {:dev {:dependencies [[ring/ring-mock "0.3.2"]
-                                  [midje "1.9.6" :exclusions [io.aviso/pretty commons-codec clj-time]]
+  :profiles {:dev {:dependencies [[midje "1.9.6" :exclusions [io.aviso/pretty commons-codec clj-time]]
                                   [javax.servlet/servlet-api "2.5"]
-                                  ;; Parsing html to hiccup
-                                  [hickory "0.7.1" :exclusions [com.google.guava/guava org.clojure/tools.reader]]
-                                  ]
+                                  [org.jsoup/jsoup "1.9.2"]]
                    :plugins [[lein-midje "3.1.3"]
                              [lein-ring "0.12.0"]]}}
   )

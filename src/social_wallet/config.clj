@@ -18,16 +18,21 @@
 (ns social-wallet.config
   (:require [taoensso.timbre :as log]
 
-            [social-wallet.util :refer [exception->failjure]]
             social-wallet.spec
             
             [yummy.config :as yc]
             [mount.core :as mount :refer [defstate]]))
 
-(defn- load-config [{:keys [config]}]
+(defn- load-config [{:keys [config with-apikey]}]
   (log/info "Loading config...")
   (yc/load-config {:path config
-                   :spec ::config
-                   :die-fn exception->failjure}))
+                   :spec (if with-apikey
+                           ::config
+                           ::noapikey-config)}))
  
 (defstate config :start (load-config (mount/args)))
+
+(defn get-swapi-params []
+  (if (:with-apikey (mount/args))
+    (:swapi config)
+    (:noapikey-swapi config)))

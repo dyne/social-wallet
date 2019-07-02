@@ -1,10 +1,3 @@
-body {
-	font-family: "arial";
-	font-size: 22px;
-	font-smooth: always;
-	-webkit-font-smoothing: antialiased;
-	padding-top: 65px;
-}
 
 code {
 	font-size: .8em;
@@ -29,13 +22,7 @@ code {
 	margin-bottom: 2em;
 }
 
-h1, h2, h3, h4 { }
 
-p {
-	letter-spacing: 0.01rem;
-	font-style: normal;
-	line-height: 1.5;
-}
 
 img {
 	width: auto;
@@ -97,27 +84,113 @@ li {
 	font-size: .5em;
 }
 
-.qrcode {
+/* .qrcode {
     float: left;
     margin-left: -19px;
+} */
+
+
+
+
+/* UPDATED STYLE */
+.header {
+	background: #f3f3f7;
+    margin-top: 24px;
+    margin-bottom: 42px;
+    padding: 8px;
+    border-radius: 4px;
+}
+
+.header .navbar-section .btn:first-of-type {
+	background: transparent;
+    margin-right: 8px;
+}
+
+.header .navbar-brand {
+	font-weight:  600
+}
+
+.login-card .card-header {
+	text-align: center
 }
 
 
-.card {
-    border: solid 3px #888;
-    border-radius: 5px;
-    padding: 1.5em 2.2em .8em 2.2em;
+footer {
+	margin-top: 60px;
 }
 
-.card .gravatar {
-    margin-top: 19px;
+footer .navbar-section a img {
+	margin-left: 36px
+}
+
+
+
+.wallet-card {
+	margin-bottom: 24px;
+}
+
+.wallet-card .tile-icon img {
+	border-radius: 100px;
+}
+
+.wallet-card .tile-title {
+	font-size: 32px;
+}
+
+.wallet-card .tile-subtitle {
+	font-size: 18px;
+	margin-top: 8px;
+}
+
+.wallet-card .tile-subtitle i {
+	margin-right: 8px;
 }
 
 .balance {
-    font-size: 2em;
-    margin: 1em 0;
+	border-radius: 4px;
+    padding: 16px;
+    height: 87px;
+    border: 1px solid;
 }
 
-.wallet-details {
-    display: inline-block;
+.qrcode {
+	margin-top: -20px
+}
+
+
+
+.filter .filter-tag#tag-0:checked ~ .filter-nav .chip[for="tag-0"],
+.filter .filter-tag#tag-1:checked ~ .filter-nav .chip[for="tag-1"],
+.filter .filter-tag#tag-2:checked ~ .filter-nav .chip[for="tag-2"],
+.filter .filter-tag#tag-3:checked ~ .filter-nav .chip[for="tag-3"],
+.filter .filter-tag#tag-4:checked ~ .filter-nav .chip[for="tag-4"],
+.filter .filter-tag#tag-5:checked ~ .filter-nav .chip[for="tag-5"],
+.filter .filter-tag#tag-6:checked ~ .filter-nav .chip[for="tag-6"],
+.filter .filter-tag#tag-7:checked ~ .filter-nav .chip[for="tag-7"],
+.filter .filter-tag#tag-8:checked ~ .filter-nav .chip[for="tag-8"] {
+  background: #5755d9;
+  color: #fff;
+}
+
+.filter .filter-tag#tag-1:checked ~ .filter-body .filter-item:not([data-tag~="tag-1"]),
+.filter .filter-tag#tag-2:checked ~ .filter-body .filter-item:not([data-tag~="tag-2"]),
+.filter .filter-tag#tag-3:checked ~ .filter-body .filter-item:not([data-tag~="tag-3"]),
+.filter .filter-tag#tag-4:checked ~ .filter-body .filter-item:not([data-tag~="tag-4"]),
+.filter .filter-tag#tag-5:checked ~ .filter-body .filter-item:not([data-tag~="tag-5"]),
+.filter .filter-tag#tag-6:checked ~ .filter-body .filter-item:not([data-tag~="tag-6"]),
+.filter .filter-tag#tag-7:checked ~ .filter-body .filter-item:not([data-tag~="tag-7"]),
+.filter .filter-tag#tag-8:checked ~ .filter-body .filter-item:not([data-tag~="tag-8"]) {
+  display: none;
+}
+
+.filter .filter-nav {
+  margin: .4rem 0;
+  padding-top: 16px;
+}
+
+.filter .filter-body {
+  display: flex;
+  display: -ms-flexbox;
+  -ms-flex-wrap: wrap;
+  flex-wrap: wrap;
 }

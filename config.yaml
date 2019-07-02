@@ -4,6 +4,12 @@ webserver:
   security:
       anti-forgery: false
       ssl-redirect: false
+  session:
+      cookie-attrs:
+        # this number is the time in seconds until the session expires
+        max-age: 600
+        # change this to true for https only on production
+        secure: false  
 
 just-auth:
   email-config: "email-conf.yaml"
@@ -18,6 +24,6 @@ just-auth:
     threshold: 1000
 
 swapi:
-  endpoint: "http://localhost:3000/wallet/v1"
+  base-url: "http://localhost:3000/wallet/v1"
   apikey-file: "apikey.yaml"
   apikey-name: "device-id"

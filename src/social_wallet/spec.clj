@@ -24,6 +24,16 @@
 (spec/def ::just-auth (spec/keys :req-un [::email-config ::mongo-config ::throttling]))
 (spec/def ::security (spec/keys :req-un [::anti-forgery ::ssl-redirect]))
 (spec/def ::webserver (spec/keys :req-un [::security]))
+(spec/def ::swapi (spec/keys :req-un [::base-url ::apikey-file ::apikey-name]))
+(spec/def ::noapikey-swapi (spec/keys :req-un [::base-url]))
+(spec/def :social-wallet.config/noapikey-config (spec/keys :req-un [::webserver ::just-auth ::noapikey-swapi]))
 (spec/def :social-wallet.config/config (spec/keys :req-un [::webserver ::just-auth ::swapi]))
+
 (spec/def :social-wallet.authenticator/email-conf (spec/keys :req-un [::email-server ::email-user ::email-pass ::email-address]))
 (spec/def :social-wallet.core/email-conf-admin  (spec/keys :req-un [:social-wallet.core/email-conf ::email-admin]))
+
+;; Sendto form
+(spec/def :social-wallet.handler/tags vector?)
+(spec/def :social-wallet.handler/to string?)
+(spec/def :social-wallet.handler/amount (and decimal? #(> % 0.0)))
+(spec/def :social-wallet.webpage/sendto (spec/keys :req-un [:social-wallet.hanler/amount :social-wallet.hanler/to :social-wallet.hanler/tags]))

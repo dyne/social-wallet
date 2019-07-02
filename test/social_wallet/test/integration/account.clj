@@ -20,11 +20,13 @@
             [social-wallet
              [core :as sc]
              [handler :as h]
-             [webpage :as web]]
+             [webpage :as web]
+             [stores :as stores]]
+            [clj-storage.core :as storage]
 
             [mount.core :as mount]
             [taoensso.timbre :as log])
-  
+
   (:import [org.jsoup Jsoup]
            [org.jsoup.nodes Document]
            [org.jsoup Connection$Method Connection$Response]))
@@ -35,9 +37,14 @@
 (def server (atom nil))
 
 (against-background [(before :contents (mount/start-with-args {:port 3001
+                                                               :host "http://localhost"
+                                                               :link-port 3001
                                                                :stub-email true
+                                                               :with-apikey false
                                                                :config "test-resources/config.yaml"}))
-                     (after :contents (mount/stop))]
+                     (after :contents (do
+                                        (storage/empty-db-stores! stores/stores)
+                                        (mount/stop)))]
 
                     (facts "Create and account, activate it, login and logout."
                            (fact "create and account"
@@ -55,20 +62,61 @@
                                        (.select "[placeholder$=Name]")
                                        first
                                        (.id))
-                                   => "signup-name")
-                                 #_(let [response (->
-                                                   (Jsoup/connect "http://localhost:3001/signup")
-                                                   (.userAgent "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.152 Safari/537.36")
-                                                   (.header "Content-Type","application/x-www-form-urlencoded")
-                                                   #_(.method Connection$Method/POST)
-                                                   (.data "name" (:name user-data))
-                                                   (.data "email" (log/spy :info (:email user-data)))
-                                                   (.data "password" (:password user-data))
-                                                   (.data "repeat-password" (:password user-data))
-                                                   (.data "email" (:email user-data))
-                                                   (.data "sing-up-submit" "Sign up")
-                                                   (.post))]
-                                     #_(.parse response)
-                                     response
-                                     )
-                                 )))
+                                   => "name")
+                                 (let [response (->
+                                                 (Jsoup/connect "http://localhost:3001/signup")
+                                                 (.userAgent "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.152 Safari/537.36")
+                                                 (.header "Content-Type","application/x-www-form-urlencoded")
+                                                 (.data "name" (:name user-data))
+                                                 (.data "email" (:email user-data))
+                                                 (.data "password" (:password user-data))
+                                                 (.data "repeat-password" (:password user-data))
+                                                 (.data "sing-up-submit" "Sign up")
+                                                 (.post))]
+                                   (-> response
+                                       (.select "body")
+                                       (.select "div")
+                                       (.select "h2")
+                                       (.text)) => (str "Account created: " (:name user-data) " <" (:email user-data) ">")))
+
+                           (fact "Activate it"
+                                 (let [activation-uri (:activation-link (storage/fetch (-> stores/stores :account-store)
+                                                                                       (:email user-data)))
+                                       response (.get (Jsoup/connect activation-uri))]
+                                   (-> response
+                                       (.select "body")
+                                       (.select "h1")
+                                       (.text))
+                                   => (str "Account activated - " (:email user-data))))
+
+                           (fact "Log in"
+                                 (let [response (->
+                                                 (Jsoup/connect "http://localhost:3001/login")
+                                                 (.userAgent "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.152 Safari/537.36")
+                                                 (.header "Content-Type","application/x-www-form-urlencoded")
+                                                 (.data "username" (:email user-data))
+                                                 (.data "password" (:password user-data))
+                                                 (.data "login-submit" "Login")
+                                                 (.post))]
+                                   (-> response
+                                       (.select "div.balance")
+                                       (.select "h2")
+                                       (.text))
+                                   =>  "0"))
+
+                           (fact "Log out"
+                                 (let [response (.get (Jsoup/connect "http://localhost:3001/logout"))]
+                                   (-> response
+                                       (.select "body")
+                                       (.select "div.card-title")
+                                       (.text))
+                                   => "Login"))
+
+                           (fact "Cannot access the wallet page if not logged in - redirected to login"
+                                 (let [response (.get (Jsoup/connect (str "http://localhost:3001/wallet/" (:email user-data))))]
+                                   (-> response
+                                       (.select "body")
+                                       (.select "div")
+                                       (.select "div.alert")
+                                       (.text))
+                                   => "Error:Please log in to be able to access this info"))))

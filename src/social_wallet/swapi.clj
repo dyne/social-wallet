@@ -23,47 +23,80 @@
             [yaml.core :as yaml]))
 
 
-(defn- headers [apikey]
-  {"x-api-key" apikey
-   "Content-Type" "application/json"})
+(def headers {"Content-Type" "application/json"})
 
-(defn- wrap-errors [response fn]
+
+
+(defn- wrap-response [response fn]
   (if (or (:error response))
       (f/fail (:error response))
       (if (not= 200 (:status response))
         (-> response :body (json/read-str :key-fn keyword) :error f/fail)
         (fn response))))
 
-(defn- swapi-request [base-url endpoint headers json body-parse-fn]
-  (let [response @(client/request {:url (str base-url "/" endpoint)
-                                   :method :post
-                                   :body json
-                                   :headers headers})]
-    (wrap-errors response body-parse-fn)))
+(defn- swapi-request [{:keys [endpoint json body-parse-fn]
+                       {:keys [base-url apikey-file apikey-name]} :swapi-params}]
+  (if apikey-file
+    (f/attempt-all [device (keyword apikey-name)
+                    apikey (f/try* (-> apikey-file slurp yaml/parse-string device))
+                    response @(client/request {:url (str base-url "/" endpoint)
+                                               :method :post
+                                               :body json
+                                               :headers (assoc headers "x-api-key" apikey)})]
+                   (wrap-response response body-parse-fn)                                      
+                   (f/when-failed [apikey]
+                     (f/message apikey)))
+    (let [response @(client/request {:url (str base-url "/" endpoint)
+                                     :method :post
+                                     :body json
+                                     :headers headers})]
+      (wrap-response response body-parse-fn))))
 
-(defn balance-request [base-url apikey-file apikey-name params]
-  (f/attempt-all [device (keyword apikey-name)
-                  apikey (f/try* (-> apikey-file slurp yaml/parse-string device))]
-                 (swapi-request base-url
-                                "balance"
-                                (headers apikey)
-                                (json/write-str
-                                 (cond-> {:connection "mongo"
-                                          :type "db-only"}
-                                   (:email params) (merge {:account-id (:email params)})))
-                                #(-> % :body (json/read-str :key-fn keyword) :amount))
-                 (f/when-failed [apikey]
-                   (f/message apikey))))
+(defn balance [swapi-params params]
+  (swapi-request {:swapi-params swapi-params
+                  :endpoint "balance"
+                  ;; TODO: should be a parameter if it is db or blockchain
+                  :json (json/write-str
+                         (cond-> {:connection "mongo"
+                                  :type "db-only"}
+                           (:email params) (merge {:account-id (:email params)})))
+                  :body-parse-fn #(-> % :body (json/read-str :key-fn keyword) :amount)}))
 
-(defn label-request [base-url apikey-file apikey-name params]
-  (f/attempt-all [device (keyword apikey-name)
-                  apikey (f/try* (-> apikey-file slurp yaml/parse-string device))]
-                 (swapi-request base-url
-                                "label"
-                                (headers apikey)
-                                (json/write-str
+(defn label-request [swapi-params params]
+  (swapi-request {:swapi-params swapi-params
+                  :endpoint "label"
+                  :json (json/write-str
                                  {:connection "mongo"
                                   :type "db-only"})
-                                #(-> % :body (json/read-str :key-fn keyword) :label))
-                 (f/when-failed [apikey]
-                   (f/message apikey))))
+                  :body-parse-fn #(-> % :body (json/read-str :key-fn keyword) :label)}))
+
+(defn sendto [swapi-params params]
+  (swapi-request {:swapi-params swapi-params
+                  :endpoint "transactions/new"
+                  :json (json/write-str
+                         (cond-> {:connection "mongo"
+                                  :type "db-only"}
+                           (:amount params) (assoc :amount (:amount params))
+                           (:from params) (assoc :from-id (:from params))
+                           (:to params) (assoc :to-id (:to params))
+                           (not (empty? (:tags params))) (assoc :tags (:tags params))))
+                  :body-parse-fn #(-> % :body)}))
+
+(defn list-transactions [swapi-params params]
+  (swapi-request {:swapi-params swapi-params
+                  :endpoint "transactions/list"
+                  :json (json/write-str
+                         (cond-> {:connection "mongo"
+                                  :type "db-only"}
+                           (:account params) (assoc :account-id (:account params))
+                           (:page params) (assoc :page (Long/parseLong (:page params)))
+                           (:per-page params) (assoc :page (Long/parseLong (:per-page params)))))
+                  :body-parse-fn #(-> % :body (json/read-str :key-fn keyword))}))
+
+(defn list-tags [swapi-params params]
+  (swapi-request {:swapi-params swapi-params
+                  :endpoint "tags/list"
+                  :json (json/write-str
+                         {:connection "mongo"
+                          :type "db-only"})
+                  :body-parse-fn #(-> % :body (json/read-str :key-fn keyword) :tags)}))
