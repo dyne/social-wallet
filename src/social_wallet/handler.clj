@@ -52,8 +52,7 @@
 (defroutes app-routes
 
   (GET "/" request
-    (let [{{:keys [auth]} :session
-           {:keys [mime language]} :accept}  request]
+    (let [{{:keys [auth]} :session}  request]
       (if (and auth (auth/get-account authenticator auth))
         (wallet-page auth (c/get-swapi-params) (:uri request))
         (web/render login-form))))
