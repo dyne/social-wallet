@@ -42,7 +42,11 @@
 
             [taoensso.timbre :as log]))
 
-(defn get-host [port] (str (:host (mount/args)) ":" port))
+(defn get-host [request]
+  "This function gets the host from startup arguments if it cannot refer it from the request. This way it can facilitate several types of deployments."
+  (or
+   (log/spy (get-in request [:headers "origin"]))
+   (log/spy (str (:host (mount/args)) ":" (:link-port (mount/args))))))
 
 (defn logged-in? [session-auth]
   (if session-auth
@@ -87,7 +91,7 @@
          ;; TODO: pass :ip-address in last argument map
          (let [session {:session {:auth account}}]
            (log/spy (conj session
-                          (log/spy (redirect "/")))))
+                          (log/spy (redirect (str (get-host request) "/"))))))
          (f/when-failed [e]
            (web/render-error-page
             (str "Login failed: " (f/message e))))))
@@ -141,7 +145,7 @@
           email (-> request :params :email)
           password (-> request :params :password)
           repeat-password (-> request :params :repeat-password)
-          activation {:activation-uri (get-host (:link-port (mount/args)))}]
+          activation {:activation-uri (get-host request)}]
          (web/render
           (if (= password repeat-password)
             (f/try*
@@ -167,7 +171,7 @@
   (GET "/activate/:email/:activation-id"
        [email activation-id :as request]
        (let [activation-uri
-             (str (get-host (:link-port (mount/args)))
+             (str (get-host request)
                   "/activate/" email "/" activation-id)]
          (web/render
           [:div
@@ -184,7 +188,7 @@
              [:h1 (str "Account activated - " email)])])))
   (GET "/qrcode/:email"
        [email :as request]
-       (qrcode/transact-to email  (get-host (:link-port (mount/args)))))
+       (qrcode/transact-to email  (get-host request)))
   (GET "/session" request
     (-> (:session request) web/render-yaml web/render))
 
