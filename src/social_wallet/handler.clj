@@ -70,16 +70,12 @@
                  [:ul (for [[x _] config] [:li x])]]))
 
 
-  ;; TODO: change conf (POST app-state)
-  (GET "/login" {{:keys [auth]} :session
-                 {:keys [mime language]} :accept}
-       (log/info "AUTH: " auth)
-       (if (and auth (auth/get-account authenticator auth))
-         (web/render auth
-                     [:div
-                      [:div.toast.toast-warning (str "Already logged in with account: " (:email auth))]
-                      [:a.btn.btn-primary {:href "/logout" :style "margin-top: 16px"} "Logout"]])
-         (web/render login-form)))
+  (GET "/login" request
+       (let [{{:keys [auth]} :session} request]
+         (log/info "AUTH: " auth)
+         (if (and auth (auth/get-account authenticator auth))
+           (wallet-page auth (c/get-swapi-params) (:uri request))
+           (web/render login-form))))
 
   
   (POST "/login" request
@@ -90,7 +86,7 @@
           account (auth/sign-in  authenticator username password {})]
          ;; TODO: pass :ip-address in last argument map
          (let [session {:auth account}]
-           (log/spy (-> (redirect (str (get-host request) "/"))
+           (log/spy (-> (redirect (str (get-host request) "/login"))
                         (assoc :session session))))
          (f/when-failed [e]
            (web/render-error-page
