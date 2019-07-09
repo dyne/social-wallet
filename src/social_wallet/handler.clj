@@ -52,7 +52,8 @@
 (defroutes app-routes
 
   (GET "/" request
-    (let [{{:keys [auth]} :session}  request]
+       (let [{{:keys [auth]} :session}  request]
+         (log/info "REQUEST " request)
       (if (and auth (auth/get-account authenticator auth))
         (wallet-page auth (c/get-swapi-params) (:uri request))
         (web/render login-form))))
@@ -68,27 +69,28 @@
   ;; TODO: change conf (POST app-state)
   (GET "/login" {{:keys [auth]} :session
                  {:keys [mime language]} :accept}
-    (if (and auth (auth/get-account authenticator auth))
-      (web/render auth
-                  [:div
-                   [:div.toast.toast-warning (str "Already logged in with account: " (:email auth))]
-                   [:a.btn.btn-primary {:href "/logout" :style "margin-top: 16px"} "Logout"]])
-      (web/render login-form)))
+       (log/info "AUTH: " auth)
+       (if (and auth (auth/get-account authenticator auth))
+         (web/render auth
+                     [:div
+                      [:div.toast.toast-warning (str "Already logged in with account: " (:email auth))]
+                      [:a.btn.btn-primary {:href "/logout" :style "margin-top: 16px"} "Logout"]])
+         (web/render login-form)))
 
-
-
+  
   (POST "/login" request
-    (f/attempt-all
-     [username (-> request :params :username)
-      password (-> request :params :password)
-      account (auth/sign-in  authenticator username password {})]
+        (log/info "LOGIN REQUEST: " request)
+        (f/attempt-all
+         [username (-> request :params :username)
+          password (-> request :params :password)
+          account (auth/sign-in  authenticator username password {})]
          ;; TODO: pass :ip-address in last argument map
-     (let [session {:session {:auth account}}]
-       (conj session
-             (redirect "/")))
-     (f/when-failed [e]
-                    (web/render-error-page
-                     (str "Login failed: " (f/message e))))))
+         (let [session {:session {:auth account}}]
+           (log/spy (conj session
+                          (log/spy (redirect "/")))))
+         (f/when-failed [e]
+           (web/render-error-page
+            (str "Login failed: " (f/message e))))))
 
 
   (GET "/wallet/:email" request
