@@ -85,7 +85,7 @@
          ;; TODO: pass :ip-address in last argument map
      (let [session {:session {:auth account}}]
        (conj session
-             (redirect "/")))
+             (redirect (get-host (:link-port (mount/args))))))
      (f/when-failed [e]
                     (web/render-error-page
                      (str "Login failed: " (f/message e))))))
@@ -190,7 +190,7 @@
   (GET "/logout" request
     (conj {:session nil}
           ; (web/render [:h1 "Logged out."])
-          (redirect "/")))
+          (redirect (get-host (:link-port (mount/args))))))
 
 
   (GET "/sendto" request
@@ -198,7 +198,7 @@
       (f/if-let-ok? [auth-resp (logged-in? auth)]
                     (web/render auth render-sendTo)
                     (web/render-error-page (f/message auth-resp)))))
-
+ 
 
   (POST "/sendto" {{:keys [amount to tags]} :params
                    {:keys [auth]} :session}
