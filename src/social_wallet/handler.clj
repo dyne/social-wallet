@@ -86,7 +86,7 @@
           account (auth/sign-in  authenticator username password {})]
          ;; TODO: pass :ip-address in last argument map
          (let [session {:auth account}]
-           (log/spy (-> (redirect (str (get-host request) "/login"))
+           (log/spy (-> (redirect (str (get-host request) "/login") :see-other)
                         (assoc :session session))))
          (f/when-failed [e]
            (web/render-error-page
