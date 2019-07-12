@@ -108,6 +108,7 @@
           {{:keys [page per-page]} :params} request]
       (f/if-let-ok? [auth-resp (logged-in? auth)]
                     (web/render auth (transactions auth
+                                                   nil
                                                    (c/get-swapi-params)
                                                    (cond-> {}
                                                      page (assoc :page page)
@@ -115,6 +116,22 @@
                                                    (:uri request)))
                     (web/render-error-page (f/message auth-resp)))))
 
+
+  (GET "/transactions/tag/:tag" request
+    (let [{{:keys [auth]} :session
+           {:keys [tag]} :route-params} request
+          {{:keys [page per-page]} :params} request]
+      (f/if-let-ok? [auth-resp (logged-in? auth)]
+                    (web/render auth (transactions auth
+                                                   tag
+                                                   (c/get-swapi-params)
+                                                   (cond-> {}
+                                                     tag (assoc :tags (list tag))
+                                                     page (assoc :page page)
+                                                     per-page (assoc :per-page per-page))
+                                                   (:uri request)))
+                    (web/render-error-page (f/message auth-resp)))))
+  
 
   (GET "/participants" request
     (let [{{:keys [auth]} :session} request]
