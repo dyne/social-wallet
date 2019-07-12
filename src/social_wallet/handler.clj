@@ -42,7 +42,11 @@
 
             [taoensso.timbre :as log]))
 
-(defn get-host [port] (str (:host (mount/args)) ":" port))
+(defn get-host [request]
+  "This function gets the host from startup arguments if it cannot refer it from the request. This way it can facilitate several types of deployments."
+  (or
+   (log/spy (get-in request [:headers "origin"]))
+   (log/spy (str (:host (mount/args)) ":" (:link-port (mount/args))))))
 
 (defn logged-in? [session-auth]
   (if session-auth
@@ -53,6 +57,7 @@
 
   (GET "/" request
     (let [{{:keys [auth]} :session}  request]
+      (log/info "REQUEST " request)
       (if (and auth (auth/get-account authenticator auth))
         (wallet-page auth (c/get-swapi-params) (:uri request))
         (web/render login-form))))
@@ -65,27 +70,24 @@
                  [:ul (for [[x _] config] [:li x])]]))
 
 
-  ;; TODO: change conf (POST app-state)
-  (GET "/login" {{:keys [auth]} :session
-                 {:keys [mime language]} :accept}
-    (if (and auth (auth/get-account authenticator auth))
-      (web/render auth
-                  [:div
-                   [:div.toast.toast-warning (str "Already logged in with account: " (:email auth))]
-                   [:a.btn.btn-primary {:href "/logout" :style "margin-top: 16px"} "Logout"]])
-      (web/render login-form)))
-
+  (GET "/login" request
+    (let [{{:keys [auth]} :session} request]
+      (log/info "AUTH: " auth)
+      (if (and auth (auth/get-account authenticator auth))
+        (wallet-page auth (c/get-swapi-params) (:uri request))
+        (web/render login-form))))
 
 
   (POST "/login" request
+    (log/info "LOGIN REQUEST: " request)
     (f/attempt-all
      [username (-> request :params :username)
       password (-> request :params :password)
       account (auth/sign-in  authenticator username password {})]
          ;; TODO: pass :ip-address in last argument map
-     (let [session {:session {:auth account}}]
-       (conj session
-             (redirect (get-host (:link-port (mount/args))))))
+     (let [session {:auth account}]
+       (log/spy (-> (redirect (str (get-host request) "/login"))
+                    (assoc :session session))))
      (f/when-failed [e]
                     (web/render-error-page
                      (str "Login failed: " (f/message e))))))
@@ -134,55 +136,55 @@
     (web/render signup-form))
 
   (POST "/signup" request
-        (f/attempt-all
-         [name (-> request :params :name)
-          email (-> request :params :email)
-          password (-> request :params :password)
-          repeat-password (-> request :params :repeat-password)
-          activation {:activation-uri (get-host (:link-port (mount/args)))}]
-         (web/render
-          (if (= password repeat-password)
-            (f/try*
-             (f/if-let-ok?
-                 [signup (auth/sign-up authenticator
-                                       name
-                                       email
-                                       password
-                                       activation
-                                       [])]
-               [:div
-                [:h2 (str "Account created: "
-                          name " &lt;" email "&gt;")]
-                [:h3 "Account pending activation."]]
-               (web/render-error
-                (str "Failure creating account: "
-                     (f/message signup)))))
-            (web/render-error
-             "Repeat password didnt match")))
-         (f/when-failed [e]
-           (web/render-error-page
-            (str "Sign-up failure: " (f/message e))))))
-  (GET "/activate/:email/:activation-id"
-       [email activation-id :as request]
-       (let [activation-uri
-             (str (get-host (:link-port (mount/args)))
-                  "/activate/" email "/" activation-id)]
-         (web/render
+    (f/attempt-all
+     [name (-> request :params :name)
+      email (-> request :params :email)
+      password (-> request :params :password)
+      repeat-password (-> request :params :repeat-password)
+      activation {:activation-uri (get-host request)}]
+     (web/render
+      (if (= password repeat-password)
+        (f/try*
+         (f/if-let-ok?
+          [signup (auth/sign-up authenticator
+                                name
+                                email
+                                password
+                                activation
+                                [])]
           [:div
-           (f/if-let-failed?
-               [act (auth/activate-account
-                     authenticator
-                     email
-                     {:activation-link activation-uri})]
-             (web/render-error
-              [:div
-               [:h1 "Failure activating account"]
-               [:h2 (f/message act)]
-               [:p (str "Email: " email " activation-id: " activation-id)]])
-             [:h1 (str "Account activated - " email)])])))
+           [:h2 (str "Account created: "
+                     name " &lt;" email "&gt;")]
+           [:h3 "Account pending activation."]]
+          (web/render-error
+           (str "Failure creating account: "
+                (f/message signup)))))
+        (web/render-error
+         "Repeat password didnt match")))
+     (f/when-failed [e]
+                    (web/render-error-page
+                     (str "Sign-up failure: " (f/message e))))))
+  (GET "/activate/:email/:activation-id"
+    [email activation-id :as request]
+    (let [activation-uri
+          (str (get-host request)
+               "/activate/" email "/" activation-id)]
+      (web/render
+       [:div
+        (f/if-let-failed?
+         [act (auth/activate-account
+               authenticator
+               email
+               {:activation-link activation-uri})]
+         (web/render-error
+          [:div
+           [:h1 "Failure activating account"]
+           [:h2 (f/message act)]
+           [:p (str "Email: " email " activation-id: " activation-id)]])
+         [:h1 (str "Account activated - " email)])])))
   (GET "/qrcode/:email"
-       [email :as request]
-       (qrcode/transact-to email  (get-host (:link-port (mount/args)))))
+    [email :as request]
+    (qrcode/transact-to email (get-host request)))
   (GET "/session" request
     (-> (:session request) web/render-yaml web/render))
 
@@ -198,23 +200,31 @@
       (f/if-let-ok? [auth-resp (logged-in? auth)]
                     (web/render auth render-sendTo)
                     (web/render-error-page (f/message auth-resp)))))
- 
+
+  (GET "/sendto/:email" request
+    (let [{{:keys [auth]} :session
+           {:keys [email]} :route-params}
+          request]
+
+      (f/if-let-ok? [auth-resp (logged-in? auth)]
+                    (web/render auth (render-sendTo email))
+                    (web/render-error-page (f/message auth-resp)))))
 
   (POST "/sendto" {{:keys [amount to tags]} :params
                    {:keys [auth]} :session}
     (f/attempt-all
          ;; TODO: specs dont work
-         [parsed-amount (u/spec->failjure ::amount amount #(BigDecimal. %))
-          parsed-to (u/spec->failjure ::to to)
-          parsed-tags (u/spec->failjure ::tags tags #(clojure.string/split % #","))
-          sender-balance (swapi/balance (c/get-swapi-params) {:email (:email auth)})]
-         (if (or
-              (>= (- sender-balance parsed-amount) 0)
-              (some #{:admin} (:flags (auth/get-account authenticator (:email auth)))))
-           (do (swapi/sendto (c/get-swapi-params) {:amount amount
-                                                      :to to
-                                                      :from (:email auth) 
-                                                   :tags parsed-tags})
+     [parsed-amount (u/spec->failjure ::amount amount #(BigDecimal. %))
+      parsed-to (u/spec->failjure ::to to)
+      parsed-tags (u/spec->failjure ::tags tags #(clojure.string/split % #","))
+      sender-balance (swapi/balance (c/get-swapi-params) {:email (:email auth)})]
+     (if (or
+          (>= (- sender-balance parsed-amount) 0)
+          (some #{:admin} (:flags (auth/get-account authenticator (:email auth)))))
+       (do (swapi/sendto (c/get-swapi-params) {:amount amount
+                                               :to to
+                                               :from (:email auth)
+                                               :tags parsed-tags})
                ;; TODO: here we dont need the uri cause there is no paging needed.
                ;; However passing nil is pretty bad
            (wallet-page auth (c/get-swapi-params) nil))
