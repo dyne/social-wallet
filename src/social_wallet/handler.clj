@@ -198,7 +198,7 @@
   (GET "/sendto" request
     (let [{{:keys [auth]} :session} request]
       (f/if-let-ok? [auth-resp (logged-in? auth)]
-                    (web/render auth render-sendTo)
+                    (web/render auth (render-sendTo))
                     (web/render-error-page (f/message auth-resp)))))
 
   (GET "/sendto/:email" request
@@ -210,7 +210,7 @@
                     (web/render auth (render-sendTo email))
                     (web/render-error-page (f/message auth-resp)))))
 
-  (POST "/sendto" {{:keys [amount to tags]} :params
+  (POST "/sendto" {{:keys [amount to tags description]} :params
                    {:keys [auth]} :session}
     (f/attempt-all
          ;; TODO: specs dont work
@@ -223,6 +223,7 @@
           (some #{:admin} (:flags (auth/get-account authenticator (:email auth)))))
        (do (swapi/sendto (c/get-swapi-params) {:amount amount
                                                :to to
+                                               :description description
                                                :from (:email auth)
                                                :tags parsed-tags})
                ;; TODO: here we dont need the uri cause there is no paging needed.
