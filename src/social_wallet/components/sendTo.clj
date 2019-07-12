@@ -25,9 +25,9 @@
                                         :placeholder "Add some tags (comma separated)"}]]
 
       [:div.form-group
-       [:label.form-label {:for "message"} "Message"]
-       [:textarea.form-input.form-control {:type "text" :id "message" :name "message"
-                                           :placeholder "Add a message"
+       [:label.form-label {:for "description"} "Message"]
+       [:textarea.form-input.form-control {:type "text" :id "description" :name "description"
+                                           :placeholder "Add a description"
                                            :rows "3"}]]
 
       [:input {:type "submit" :name "sendto-submit" :value "Send"

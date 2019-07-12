@@ -79,6 +79,7 @@
                            (:amount params) (assoc :amount (:amount params))
                            (:from params) (assoc :from-id (:from params))
                            (:to params) (assoc :to-id (:to params))
+                           (not (empty? (:description params))) (assoc :description (:description params))
                            (not (empty? (:tags params))) (assoc :tags (:tags params))))
                   :body-parse-fn #(-> % :body)}))
 

@@ -35,6 +35,7 @@
          [:th "To"]
          [:th "Amount"]
          [:th "Time"]
+         [:th "Description"]
          [:th "Tags"]]]
        [:tbody
         (doall (for [t transactions]
@@ -46,6 +47,7 @@
                   [:td (:to-id t)]
                   [:td (:amount-text t)]
                   [:td (:timestamp t)]
+                  [:td (:description t)]
                   [:td (for [tag (:tags t)] (if (> (count tag) 0) [:div.chip tag] [:div]))]]))]]]
      (when (= uri "/transactions")
        (pagination total (or (:page query-params) 1) uri))]
