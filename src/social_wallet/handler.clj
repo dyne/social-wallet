@@ -85,7 +85,7 @@
       password (-> request :params :password)
       account (auth/sign-in  authenticator username password {})]
          ;; TODO: pass :ip-address in last argument map
-     (let [session {:session {:auth account}}]
+     (let [session {:auth account}]
        (-> (redirect "/")
            (assoc :session session)))
      (f/when-failed [e]
