@@ -42,7 +42,9 @@
 
             [taoensso.timbre :as log]))
 
-(defn get-host [port] (str (:host (mount/args)) ":" port))
+(defn get-host [port] (if port
+                        (str (:host (mount/args)) ":" port)
+                        (:host (mount/args))))
 
 (defn logged-in? [session-auth]
   (if session-auth
