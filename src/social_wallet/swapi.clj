@@ -39,10 +39,10 @@
   (if apikey-file
     (f/attempt-all [device (keyword apikey-name)
                     apikey (f/try* (-> apikey-file slurp yaml/parse-string device))
-                    response @(client/request {:url (str base-url "/" endpoint)
-                                               :method :post
-                                               :body json
-                                               :headers (assoc headers "x-api-key" apikey)})]
+                    response (f/try* @(client/request {:url (str base-url "/" endpoint)
+                                                      :method :post
+                                                      :body json
+                                                      :headers (assoc headers "x-api-key" apikey)}))]
                    (wrap-response response body-parse-fn)                                      
                    (f/when-failed [apikey]
                      (f/message apikey)))

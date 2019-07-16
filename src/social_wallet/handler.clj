@@ -104,14 +104,17 @@
   (GET "/transactions" request
     (let [{{:keys [auth]} :session} request
           {{:keys [page per-page]} :params} request]
-      (f/if-let-ok? [auth-resp (logged-in? auth)]
-                    (web/render auth (transactions auth
-                                                   (c/get-swapi-params)
-                                                   (cond-> {}
-                                                     page (assoc :page page)
-                                                     per-page (assoc :per-page per-page))
-                                                   (:uri request)))
-                    (web/render-error-page (f/message auth-resp)))))
+      (f/attempt-all [auth-resp (logged-in? auth)
+                      transactions (transactions auth
+                                                 (c/get-swapi-params)
+                                                 (cond-> {}
+                                                   page (assoc :page page)
+                                                   per-page (assoc :per-page per-page))
+                                                 (:uri request))]
+                     (web/render auth transactions)
+                     (f/when-failed [e]
+                       (log/error (f/message e))
+                       (web/render-error-page (f/message e))))))
 
 
   (GET "/participants" request
@@ -122,13 +125,16 @@
   (GET "/tags" request
     (let [{{:keys [auth]} :session} request
           {{:keys [page per-page]} :params} request]
-      (f/if-let-ok? [auth-resp (logged-in? auth)]
-                    (web/render auth (render-tags (c/get-swapi-params)
-                                                  (cond-> {}
-                                                    page (assoc :page page)
-                                                    per-page (assoc :per-page per-page))
-                                                  (:uri request)))
-                    (web/render-error-page (f/message auth-resp)))))
+      (f/attempt-all [auth-resp (logged-in? auth)
+                      tags (render-tags (c/get-swapi-params)
+                                        (cond-> {}
+                                          page (assoc :page page)
+                                          per-page (assoc :per-page per-page))
+                                        (:uri request))]
+                     (web/render auth tags)
+                     (f/when-failed [e]
+                       (log/error (f/message e))
+                       (web/render-error-page (f/message e))))))
 
   (GET "/signup" request
     (web/render signup-form))
