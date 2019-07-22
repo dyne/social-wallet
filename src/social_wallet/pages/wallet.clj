@@ -17,7 +17,7 @@
                "text/html; charset=utf-8"}
      :body (page/html5
             (render-head)
-            [:body.container.grid-lg 
+            [:body.container.grid-lg
              (header-account account)
              [:div {:class "wallet-details"}
               [:div.wallet-card.clearfix
@@ -39,8 +39,9 @@
                               [:span {:class "func--account-page--balance"}]
                               [:h2 balance]]
                              (render-error balance))]
-              
+
               [:div {:style "margin-top: 60px"}
+               
                [:div.divider.text-left {:data-content "YOUR TRANSACTIONS"}]
-               (transactions account swapi-params {} uri)]]
+               (transactions account nil swapi-params {} uri)]]
              (footer)])}))

@@ -22,10 +22,10 @@
   :dependencies [[org.clojure/clojure "1.10.0"]
                  ;; Command line processing
                  [org.clojure/tools.cli "0.4.2"]
-                 
+
                  ;; ring routing
                  [compojure "1.6.1"]
-                 
+
                  ;; HTTP server abstraction
                  [ring/ring-core "1.7.1" :exclusions [ring/ring-codec]]
                  ;; ring middleware and defaults
@@ -36,7 +36,7 @@
                  [ring-cors "0.1.13"]
                  [ring/ring-session-timeout "0.2.0"]
                  [ring-logger "1.0.1"]
-                 
+
                  ;; json
                  [org.clojure/data.json "0.2.6"]
 
@@ -67,15 +67,20 @@
 
                  ;; QRcode
                  [clj.qrgen "0.4.0"]
-                 
                  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Dyne libs
                  ;;
+
+                 ; fxc secret sharing protocol
+                 [org.clojars.dyne/fxc "0.6.0"]
+
+                 ; freecoin core lib
+                 [org.clojars.dyne/freecoin-lib "0.8.0"]
                  ;; storage lib
                  [org.clojars.dyne/clj-storage "0.10.0" :exclusions [com.taoensso/encore
                                                                      org.clojure/tools.reader]]
                  ;; authentication library
                  [org.clojars.dyne/just-auth "0.6.0-SNAPSHOT" :exclusions [com.taoensso/encore
-                                                                  org.clojure/tools.reader]]]
+                                                                           org.clojure/tools.reader]]]
 
 
   :pedantic? :warn
@@ -89,5 +94,6 @@
                                   [javax.servlet/servlet-api "2.5"]
                                   [org.jsoup/jsoup "1.9.2"]]
                    :plugins [[lein-midje "3.1.3"]
+                             [lein-cloverage "1.1.1"]
                              [lein-ring "0.12.0"]]}}
   )
