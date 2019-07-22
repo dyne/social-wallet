@@ -131,7 +131,7 @@
                                                      per-page (assoc :per-page per-page))
                                                    (:uri request)))
                     (web/render-error-page (f/message auth-resp)))))
-  
+
 
   (GET "/participants" request
     (let [{{:keys [auth]} :session} request]
@@ -213,6 +213,7 @@
 
 
   (GET "/sendto" request
+    (log/spy request)
     (let [{{:keys [auth]} :session} request]
       (f/if-let-ok? [auth-resp (logged-in? auth)]
                     (web/render auth (render-sendTo))
@@ -227,8 +228,10 @@
                     (web/render auth (render-sendTo email))
                     (web/render-error-page (f/message auth-resp)))))
 
-  (POST "/sendto" {{:keys [amount to tags description]} :params
-                   {:keys [auth]} :session}
+  (POST "/sendto"
+    {{:keys [amount to tags description]} :params
+     {:keys [auth]} :session}
+    (log/spy (auth/get-account authenticator (:email auth)))
     (f/attempt-all
          ;; TODO: specs dont work
      [parsed-amount (u/spec->failjure ::amount amount #(BigDecimal. %))
@@ -246,6 +249,7 @@
                ;; TODO: here we dont need the uri cause there is no paging needed.
                ;; However passing nil is pretty bad
            (wallet-page auth (c/get-swapi-params) nil))
+
        (web/render-error-page "Not enough funds to make a transaction."))
      (f/when-failed [e]
            ;; TODO: make it appear in form

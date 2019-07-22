@@ -23,25 +23,44 @@
              [webpage :as web]
              [stores :as stores]]
             [clj-storage.core :as storage]
-
+            [social-wallet.test-helpers.integration :as ih]
+            [social-wallet.test.integration.helpers :as helpers]
             [mount.core :as mount]
+            [freecoin-lib.db.freecoin :as db]
+            [freecoin-lib.core :as blockchain]
+            [just-auth.db
+             [account :as account]
+             [just-auth :as auth-db]]
+            [just-auth.core :as auth]
             [taoensso.timbre :as log])
 
   (:import [org.jsoup Jsoup]
            [org.jsoup.nodes Document]
            [org.jsoup Connection$Method Connection$Response]))
 
-(def user-data {:name "user1"
-                :email "user@mail.com"
-                :password "12345678"})
+
+(def username "test")
+
 (def server (atom nil))
 
-(against-background [(before :contents (mount/start-with-args {:port 3001
-                                                               :host "http://localhost"
-                                                               :link-port 3001
-                                                               :stub-email true
-                                                               :with-apikey false
-                                                               :config "test-resources/config.yaml"}))
+
+(ih/setup-db)
+(def freecoin-stores (db/create-freecoin-stores (ih/get-test-db) {}))
+
+
+(def stores-m (merge 
+               freecoin-stores
+               (auth-db/create-auth-stores (ih/get-test-db) {:ttl-password-recovery 30})))
+
+
+(against-background [(before  :facts (storage/empty-db-stores! stores-m))
+                     (before
+                      :contents (mount/start-with-args {:port 3001
+                                                        :host "http://localhost"
+                                                        :link-port 3001
+                                                        :stub-email true
+                                                        :with-apikey false
+                                                        :config "test-resources/config.yaml"}))
                      (after :contents (do
                                         (storage/empty-db-stores! stores/stores)
                                         (mount/stop)))]
@@ -63,46 +82,53 @@
                                        first
                                        (.id))
                                    => "name")
-                                 (let [response (->
-                                                 (Jsoup/connect "http://localhost:3001/signup")
-                                                 (.userAgent "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.152 Safari/537.36")
-                                                 (.header "Content-Type","application/x-www-form-urlencoded")
-                                                 (.data "name" (:name user-data))
-                                                 (.data "email" (:email user-data))
-                                                 (.data "password" (:password user-data))
-                                                 (.data "repeat-password" (:password user-data))
-                                                 (.data "sing-up-submit" "Sign up")
-                                                 (.post))]
+                                 (let [response (helpers/signup username)]
                                    (-> response
                                        (.select "body")
                                        (.select "div")
                                        (.select "h2")
-                                       (.text)) => (str "Account created: " (:name user-data) " <" (:email user-data) ">")))
+                                       (.text)) => (str "Account created: " username " <" (str username "@mail.com") ">")))
 
                            (fact "Activate it"
                                  (let [activation-uri (:activation-link (storage/fetch (-> stores/stores :account-store)
-                                                                                       (:email user-data)))
+                                                                                       (str username "@mail.com")))
                                        response (.get (Jsoup/connect activation-uri))]
+
+
+                                    ;  (helpers/make-admin stores/stores (str username "@mail.com"))
                                    (-> response
                                        (.select "body")
                                        (.select "h1")
                                        (.text))
-                                   => (str "Account activated - " (:email user-data))))
+                                   => (str "Account activated - " (str username "@mail.com"))))
+
+                           
+                           
 
                            (fact "Log in"
-                                 (let [response (->
-                                                 (Jsoup/connect "http://localhost:3001/login")
-                                                 (.userAgent "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.152 Safari/537.36")
-                                                 (.header "Content-Type","application/x-www-form-urlencoded")
-                                                 (.data "username" (:email user-data))
-                                                 (.data "password" (:password user-data))
-                                                 (.data "login-submit" "Login")
-                                                 (.post))]
+                                 (let [response (helpers/login username)]
                                    (-> response
                                        (.select "div.balance")
                                        (.select "h2")
                                        (.text))
                                    =>  "0"))
+
+                              (fact "make test admin"
+                                    (fact "Caution!! Mongo converts the keywords to a string"
+                                          (helpers/make-admin stores/stores "test@mail.com")
+                                          (->
+                                        ;    (log/spy (account/fetch (:account-store stores/stores) "test@mail.com"))
+                                           (account/fetch (:account-store stores/stores)  "test@mail.com")
+                                           :flags
+                                           (first))  => :admin))
+
+                           (fact "Send token to another account"
+                                 (let [response
+                                       (helpers/send-token "10" "bea" "test description" "apple")]
+                                   (-> response
+                                       (log/spy response)) => response))
+
+
 
                            (fact "Log out"
                                  (let [response (.get (Jsoup/connect "http://localhost:3001/logout"))]
@@ -113,10 +139,13 @@
                                    => "Login"))
 
                            (fact "Cannot access the wallet page if not logged in - redirected to login"
-                                 (let [response (.get (Jsoup/connect (str "http://localhost:3001/wallet/" (:email user-data))))]
+                                 (let [response (.get (Jsoup/connect (str "http://localhost:3001/wallet/" (str username "@mail.com"))))]
                                    (-> response
                                        (.select "body")
                                        (.select "div")
                                        (.select "div.alert")
                                        (.text))
-                                   => "Error:Please log in to be able to access this info"))))
+                                   => "Error:Please log in to be able to access this info")))
+
+                    (facts "Participant can send freecoins to another account")
+                    )
