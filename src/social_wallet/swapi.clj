@@ -90,6 +90,7 @@
                          (cond-> {:connection "mongo"
                                   :type "db-only"}
                            (:account params) (assoc :account-id (:account params))
+                            (not (empty? (:tags params))) (assoc :tags (:tags params))
                            (:page params) (assoc :page (Long/parseLong (:page params)))
                            (:per-page params) (assoc :page (Long/parseLong (:per-page params)))))
                   :body-parse-fn #(-> % :body (json/read-str :key-fn keyword))}))
