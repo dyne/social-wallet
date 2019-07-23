@@ -2,8 +2,7 @@
   (:require
    [social-wallet.components.pagination :refer [pagination]]
    [social-wallet.swapi :as swapi]
-   [failjure.core :as f])
-  )
+   [failjure.core :as f]))
 
 
 
@@ -21,8 +20,7 @@
        [:h1 (str "Transactions for " tag)]
        [:div.filter-nav
         (for [t tags]
-          [:a {:href (str "/transactions/tag/" t)} [:label.chip t]])]
-       )
+          [:a {:href (str "/transactions/tag/" t)} [:label.chip t]])])
      
      [:table.func--transactions-page--table.table.table-striped
       [:thead
@@ -45,6 +43,9 @@
                  [:td (:description t)]
                  [:td (for [tag (:tags t)] (if (> (count tag) 0) [:div.chip tag] [:div]))]]))]]
      (when (= uri "/transactions")
-       (pagination total (or (:page query-params) 1) uri))]
-    (f/when-failed [e]
-      (f/message e))))
+       (pagination total (or (:page query-params) 1) uri))
+]
+; (f/when-failed [e]
+;                (f/message e))
+    
+    ))

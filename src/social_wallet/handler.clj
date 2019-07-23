@@ -222,9 +222,14 @@
                     (web/render-error-page (f/message auth-resp)))))
 
 
-      (f/if-let-ok? [auth-resp (logged-in? auth)]
-                    (web/render auth (render-sendTo email))
-                    (web/render-error-page (f/message auth-resp)))))
+      (GET "/sendto/:email" request
+        (let [{{:keys [auth]} :session
+               {:keys [email]} :route-params}
+              request]
+
+          (f/if-let-ok? [auth-resp (logged-in? auth)]
+                        (web/render auth (render-sendTo email))
+                        (web/render-error-page (f/message auth-resp)))))
 
   (POST "/sendto" {{:keys [amount to tags description]} :params
                    {:keys [auth]} :session}
