@@ -9,9 +9,9 @@
     [:form {:action "/login"
             :method "post"}
      [:div.form-group
-      [:label.form-label {:for "username"} "Username"]
+      [:label.form-label {:for "username"} "Email"]
       [:input.form-input.form-control {:type "text" :id "username" :name "username"
-                                       :placeholder "Type your username"}
+                                       :placeholder "Type your email"}
                                        ]]
      [:div.form-group
       [:label.form-label {:for "password"} "Password"]
