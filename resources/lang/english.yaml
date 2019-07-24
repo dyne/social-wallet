@@ -56,3 +56,4 @@ navbar:
   transactions: "All transactions"
   participants: "All participants"
   tags: "All tags"
+  qrcode: "Show QRcode"
