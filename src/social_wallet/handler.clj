@@ -29,6 +29,7 @@
             [social-wallet.authenticator :refer [authenticator]]
             [social-wallet.swapi :as swapi]
             [social-wallet.util :as u]
+            [social-wallet.components.qrcode :refer [qrcode-page]]
             [social-wallet.components.transactions_list :refer [transactions]]
             [social-wallet.components.participants_list :refer [render-participants]]
             [social-wallet.components.tag :refer [render-tags]]
@@ -149,62 +150,62 @@
                                         (:uri request))]
                      (web/render auth tags)
                      (f/when-failed [e]
-                       (log/error (f/message e))
-                       (web/render-error-page (f/message e))))))
+                                    (log/error (f/message e))
+                                    (web/render-error-page (f/message e))))))
 
   (GET "/signup" request
     (web/render signup-form))
 
   (POST "/signup" request
-        (f/attempt-all
-         [name (-> request :params :name)
-          email (-> request :params :email)
-          password (-> request :params :password)
-          repeat-password (-> request :params :repeat-password)
-          activation {:activation-uri (get-host (:link-port (mount/args)))}]
-         (web/render
-          (if (= password repeat-password)
-            (f/try*
-             (f/if-let-ok?
-                 [signup (auth/sign-up authenticator
-                                       name
-                                       email
-                                       password
-                                       activation
-                                       [])]
-               [:div
-                [:h2 (str "Account created: "
-                          name " &lt;" email "&gt;")]
-                [:h3 "Account pending activation."]]
-               (web/render-error
-                (str "Failure creating account: "
-                     (f/message signup)))))
-            (web/render-error
-             "Repeat password didnt match")))
-         (f/when-failed [e]
-           (web/render-error-page
-            (str "Sign-up failure: " (f/message e))))))
-  (GET "/activate/:email/:activation-id"
-       [email activation-id :as request]
-       (let [activation-uri
-             (str (get-host (:link-port (mount/args)))
-                  "/activate/" email "/" activation-id)]
-         (web/render
+    (f/attempt-all
+     [name (-> request :params :name)
+      email (-> request :params :email)
+      password (-> request :params :password)
+      repeat-password (-> request :params :repeat-password)
+      activation {:activation-uri (get-host (:link-port (mount/args)))}]
+     (web/render
+      (if (= password repeat-password)
+        (f/try*
+         (f/if-let-ok?
+          [signup (auth/sign-up authenticator
+                                name
+                                email
+                                password
+                                activation
+                                [])]
           [:div
-           (f/if-let-failed?
-               [act (auth/activate-account
-                     authenticator
-                     email
-                     {:activation-link activation-uri})]
-             (web/render-error
-              [:div
-               [:h1 "Failure activating account"]
-               [:h2 (f/message act)]
-               [:p (str "Email: " email " activation-id: " activation-id)]])
-             [:h1 (str "Account activated - " email)])])))
+           [:h2 (str "Account created: "
+                     name " &lt;" email "&gt;")]
+           [:h3 "Account pending activation."]]
+          (web/render-error
+           (str "Failure creating account: "
+                (f/message signup)))))
+        (web/render-error
+         "Repeat password didnt match")))
+     (f/when-failed [e]
+                    (web/render-error-page
+                     (str "Sign-up failure: " (f/message e))))))
+  (GET "/activate/:email/:activation-id"
+    [email activation-id :as request]
+    (let [activation-uri
+          (str (get-host (:link-port (mount/args)))
+               "/activate/" email "/" activation-id)]
+      (web/render
+       [:div
+        (f/if-let-failed?
+         [act (auth/activate-account
+               authenticator
+               email
+               {:activation-link activation-uri})]
+         (web/render-error
+          [:div
+           [:h1 "Failure activating account"]
+           [:h2 (f/message act)]
+           [:p (str "Email: " email " activation-id: " activation-id)]])
+         [:h1 (str "Account activated - " email)])])))
   (GET "/qrcode/:email"
-       [email :as request]
-       (qrcode/transact-to email  (get-host (:link-port (mount/args)))))
+    [email :as request]
+    (qrcode/transact-to email  (get-host (:link-port (mount/args)))))
   (GET "/session" request
     (-> (:session request) web/render-yaml web/render))
 
@@ -215,6 +216,13 @@
           (redirect "/")))
 
 
+  (GET "/qrcode" request
+    (let [{{:keys [auth]} :session} request]
+      (f/if-let-ok? [auth-resp (logged-in? auth)]
+                    (web/render auth (qrcode-page (:email auth)))
+                    (web/render-error-page (f/message auth-resp)))))
+
+  
   (GET "/sendto" request
     (let [{{:keys [auth]} :session} request]
       (f/if-let-ok? [auth-resp (logged-in? auth)]
@@ -222,14 +230,14 @@
                     (web/render-error-page (f/message auth-resp)))))
 
 
-      (GET "/sendto/:email" request
-        (let [{{:keys [auth]} :session
-               {:keys [email]} :route-params}
-              request]
+  (GET "/sendto/:email" request
+    (let [{{:keys [auth]} :session
+           {:keys [email]} :route-params}
+          request]
 
-          (f/if-let-ok? [auth-resp (logged-in? auth)]
-                        (web/render auth (render-sendTo email))
-                        (web/render-error-page (f/message auth-resp)))))
+      (f/if-let-ok? [auth-resp (logged-in? auth)]
+                    (web/render auth (render-sendTo email))
+                    (web/render-error-page (f/message auth-resp)))))
 
   (POST "/sendto" {{:keys [amount to tags description]} :params
                    {:keys [auth]} :session}
