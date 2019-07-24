@@ -37,6 +37,8 @@
                  [ring/ring-session-timeout "0.2.0"]
                  [ring-logger "1.0.1"]
                  
+                 ;; Readable time formatter lib
+                 [clj-time "0.15.0"]
                  ;; json
                  [org.clojure/data.json "0.2.6"]
 
@@ -75,7 +77,7 @@
                                                                      org.clojure/tools.reader]]
                  ;; authentication library
                  [org.clojars.dyne/just-auth "0.6.0-SNAPSHOT" :exclusions [com.taoensso/encore
-                                                                  org.clojure/tools.reader]]]
+                                                                           org.clojure/tools.reader]]]
 
 
   :pedantic? :warn
