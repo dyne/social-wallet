@@ -2,9 +2,10 @@
   (:require
    [social-wallet.components.pagination :refer [pagination]]
    [social-wallet.swapi :as swapi]
+   [clj-time.format :as ft]
    [failjure.core :as f]))
 
-
+(def formatter (ft/formatter "dd MMMM, yyyy"))
 
 (defn transactions [account tag swapi-params query-params uri]
   (let [response (swapi/list-transactions swapi-params (cond-> {}
@@ -39,7 +40,7 @@
                  [:td (:from-id t)]
                  [:td (:to-id t)]
                  [:td (:amount-text t)]
-                 [:td (:timestamp t)]
+                 [:td.minwidth (ft/unparse formatter (ft/parse (:timestamp t)))]
                  [:td (:description t)]
                  [:td (for [tag (:tags t)] (if (> (count tag) 0) [:div.chip tag] [:div]))]]))]]
      (when (= uri "/transactions")
