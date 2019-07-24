@@ -6,37 +6,66 @@
   [:header.navbar.header
    [:div.navbar-section
     [:a.bold.navbar-brand.mr-2 {:href "/"} "social wallet"]]
+   
    [:div.navbar-section
     [:a {:class "btn"
          :href "/login"} " Login"]
     [:a {:class "btn btn-primary"
-         :href "/signup"} " Sign-up"]]])
+         :href "/signup"} " Sign-up"]]
+   
+   ])
 
 
 (defn header-account [account]
   [:header.navbar.header
    [:div.navbar-section
+    [:div.show-md
+     [:div.dropdown
+      [:a.btn.btn-link.dropdown-toggle {:href "#" :tabIndex "0"}
+       [:i.icon.icon-menu]]
+      [:ul.menu
+       [:li.menu-item
+        [:a {:href "/sendto"} (t/locale [:wallet :send])]]
+       [:li.menu-item
+        [:a {:href "/transactions"}
+         (t/locale [:navbar :transactions])]]
+       [:li.menu-item
+        [:a {:href "/participants"}
+         (t/locale [:navbar :participants])]]
+       [:li.menu-item
+        [:a {:href "/tags"}
+         (t/locale [:navbar :tags])]]
+       [:li.menu-item
+        [:a {:href "/qrcode"}
+         (t/locale [:navbar :qrcode])]]
+       [:li.menu-item
+        [:a {:href "/app-state"} (t/locale [:navbar :conf])]]
+       [:li.menu-item
+        [:a {:href "/logout"} (t/locale [:navbar :log-out])]]]]]
     [:a.bold.navbar-brand.mr-2 {:href "/"} "social wallet"]]
-   [:div.navbar-section
+   [:div.navbar-section.hide-md
     [:a.btn.btn-link {:href "/sendto"}
      (t/locale [:wallet :send])]
     [:a.btn.btn-link {:href "/transactions"}
      (t/locale [:navbar :transactions])]
-   [:a.btn.btn-link {:href "/participants"}
-    (t/locale [:navbar :participants])]
-   [:a.btn.btn-link {:href "/tags"}
-    (t/locale [:navbar :tags])]
-   [:div.dropdown
-    [:a.btn.btn-link.dropdown-toggle {:href "#" :tabIndex "0"}
-     [:i.icon.icon-menu]
-     ]
-    [:ul.menu
-     [:li.menu-item
-      [:a {:href "/app-state"} (t/locale [:navbar :conf])]]
-     [:li.menu-item
-      [:a {:href "/logout"} (t/locale [:navbar :log-out])]]
-     ]
-    ]]])
+    [:a.btn.btn-link {:href "/participants"}
+     (t/locale [:navbar :participants])]
+    [:a.btn.btn-link {:href "/tags"}
+     (t/locale [:navbar :tags])]
+    [:div.dropdown
+     [:a.btn.btn-link.dropdown-toggle {:href "#" :tabIndex "0"}
+      [:i.icon.icon-menu]
+      ]
+     [:ul.menu
+      [:li.menu-item
+       [:a {:href "/qrcode"}
+        (t/locale [:navbar :qrcode])]]
+      [:li.menu-item
+       [:a {:href "/app-state"} (t/locale [:navbar :conf])]]
+      [:li.menu-item
+       [:a {:href "/logout"} (t/locale [:navbar :log-out])]]
+      ]
+     ]]])
    
    
 ;    <div class= "dropdown" >

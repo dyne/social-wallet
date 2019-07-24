@@ -2,7 +2,7 @@
   (:require [hiccup.page :as page]
             [auxiliary.translation :as t]
             [clavatar.core :as clavatar]
-            [hiccup.util :as hu]
+            
             [social-wallet.swapi :as swapi]
             [social-wallet.components.transactions_list :refer [transactions]]
             [social-wallet.components.footer :refer [footer]]
@@ -21,27 +21,27 @@
              (header-account account)
              [:div {:class "wallet-details"}
               [:div.wallet-card.clearfix
-               [:span {:class "qrcode float-right"}
-                [:img {:src (hu/url  "/qrcode/" email)}]]
-               [:div.card-info.float-left
-                [:div.tile.tile-centered
-                 [:div.tile-icon
-                  [:div.gravatar
-                   [:img {:src (clavatar/gravatar email :size 87 :default :mm)}]]]
-                 [:div.tile-content
-                  [:div.tile-title (:name account)]
-                  [:div.tile-subtitle.text-gray
-                   [:i.icon.icon-mail] email]]]]
-               (f/if-let-ok? [balance (swapi/balance swapi-params
-                                                     (select-keys account [:email]))]
-                             [:div.balance.float-right
-                              (str (t/locale [:wallet :balance]))
-                              [:span {:class "func--account-page--balance"}]
-                              [:h2 balance]]
-                             (render-error balance))]
+               [:div.card-info.panel-header.text-center
+                [:figure.avatar.avatar-lg
+                 [:img {:src (clavatar/gravatar email :size 87 :default :mm)}]]
+                [:div.panel-title.h5.mt-10
+                 (:name account)]
+                [:div.panel-subtitle.text-gray
+                 [:i.icon.icon-mail] email]]
+               [:div.info.clearfix.text-center
+                (f/if-let-ok? [balance (swapi/balance swapi-params
+                                                      (select-keys account [:email]))]
+                              [:div.balance
+                               (str (t/locale [:wallet :balance]))
+                               [:span {:class "func--account-page--balance"}]
+                               [:h2 balance]]
+                              (render-error balance))
+                ; [:span {:class "qrcode"}
+                ;  [:img {:src (hu/url  "/qrcode/" email)}]]
+                ]]]
 
-              [:div {:style "margin-top: 60px"}
-               
-               [:div.divider.text-left {:data-content "YOUR TRANSACTIONS"}]
-               (transactions account nil swapi-params {} uri)]]
+             [:div {:style "margin-top: 60px"}
+
+              [:div.divider.text-left {:data-content "YOUR TRANSACTIONS"}]
+              (transactions account nil swapi-params {} uri)]
              (footer)])}))

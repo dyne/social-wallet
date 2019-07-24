@@ -17,7 +17,7 @@
       (doall (for [p participants]
                [:tr
                 [:td (:name p)]
-                [:td [:a {:href (str "/sendto/" (:email p))} (:email p) ]]
+                [:td (:email p) ]
                 [:td (interpose ", " (:other-names p))]
                 [:td [:a.btn.btn-primary.tooltip {:href (str "/sendto/" (:email p))
                                              :data-tooltip (str "Send tokens to " (:name p))}
