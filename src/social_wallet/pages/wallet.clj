@@ -36,9 +36,13 @@
                [:div.info.clearfix.text-center
                 (f/if-let-ok? [balance (swapi/balance swapi-params
                                                       (select-keys account [:email]))]
-                              [:div.chip.balance
-                               [:span "👛"]
-                               [:h2 (str (t/locale [:wallet :balance]) ": " balance)]]
+                              [:div.balance
+                               
+                               [:span {:class "func--account-page--balance"}]
+                               [:h3 "👛"]
+                               [:h2 balance]
+                               [:h4 (str (t/locale [:wallet :balance]))]
+                               ]
                               (render-error balance))
                 ; [:span {:class "qrcode"}
                 ;  [:img {:src (hu/url  "/qrcode/" email)}]]
