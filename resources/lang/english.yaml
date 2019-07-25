@@ -8,7 +8,7 @@ wallet:
   welcome: "Welcome to the Common Coin"
   name: "Name"
   email: "Email"
-  balance: "Balance"
+  balance: "Total Balance"
   send: "Send amount"
   list: "List transactions"
   participants: "List participants"
