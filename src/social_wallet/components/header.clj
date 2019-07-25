@@ -5,10 +5,10 @@
 (def header-guest
   [:header.navbar.header
    [:div.navbar-section
-    [:a.bold.navbar-brand.mr-2 {:href "/"} "social wallet"]]
+    [:a.bold.navbar-brand.mr-2 {:href "/"} [:img {:src "/static/img/logo.svg"}]]]
    
-   [:div.navbar-section
-    [:a {:class "btn"
+   [:div.navbar-section.commonfare-links
+    [:a {:class "btn btn-link"
          :href "/login"} " Login"]
     [:a {:class "btn btn-primary"
          :href "/signup"} " Sign-up"]]
@@ -42,8 +42,9 @@
         [:a {:href "/app-state"} (t/locale [:navbar :conf])]]
        [:li.menu-item
         [:a {:href "/logout"} (t/locale [:navbar :log-out])]]]]]
-    [:a.bold.navbar-brand.mr-2 {:href "/"} "social wallet"]]
-   [:div.navbar-section.hide-md
+    [:a.bold.navbar-brand.mr-2 {:href "/"}
+    [:img {:src "/static/img/logo.svg"}]]]
+   [:div.navbar-section.hide-md.commonfare-links
     [:a.btn.btn-link {:href "/sendto"}
      (t/locale [:wallet :send])]
     [:a.btn.btn-link {:href "/transactions"}

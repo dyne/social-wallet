@@ -32,9 +32,12 @@
                 (f/if-let-ok? [balance (swapi/balance swapi-params
                                                       (select-keys account [:email]))]
                               [:div.balance
-                               (str (t/locale [:wallet :balance]))
+                               
                                [:span {:class "func--account-page--balance"}]
-                               [:h2 balance]]
+                               [:h3 "👛"]
+                               [:h2 balance]
+                               [:h4 (str (t/locale [:wallet :balance]))]
+                               ]
                               (render-error balance))
                 ; [:span {:class "qrcode"}
                 ;  [:img {:src (hu/url  "/qrcode/" email)}]]
