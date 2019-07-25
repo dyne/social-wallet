@@ -166,6 +166,16 @@ footer .navbar-section a img {
 	margin: 0;
 }
 
+.balance h3 {
+	margin: 0;
+}
+
+.balance h4 {
+	font-size: 12px;
+    text-transform: uppercase;
+    font-weight: 800;
+}
+
 .qrcode img {
   margin: 0 auto;
   text-align: center;
@@ -213,6 +223,7 @@ footer .navbar-section a img {
 .maxwidth {
 	max-width: 200px;
 }
+
 
 /* RESPONSIVE */
 @media screen and (max-width: 840px) {
