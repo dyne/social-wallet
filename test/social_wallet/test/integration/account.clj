@@ -18,12 +18,9 @@
 (ns social-wallet.test.integration.account
   (:require [midje.sweet :refer [against-background before after facts fact =>]]
             [social-wallet
-             [core :as sc]
-             [handler :as h]
-             [webpage :as web]
              [stores :as stores]]
             [clj-storage.core :as storage]
-
+            [org.httpkit.client :as client]
             [mount.core :as mount]
             [taoensso.timbre :as log])
 
@@ -48,7 +45,9 @@
 
                     (facts "Create and account, activate it, login and logout."
                            (fact "create and account"
-                                 (let [response (.get (Jsoup/connect "http://localhost:3001/signup"))]
+                                 (let [response (-> @(client/get "http://localhost:3001/signup")
+                                                    :body
+                                                    Jsoup/parse)]
                                    (-> response
                                        (.select "form")
                                        first
@@ -63,16 +62,18 @@
                                        first
                                        (.id))
                                    => "name")
-                                 (let [response (->
-                                                 (Jsoup/connect "http://localhost:3001/signup")
-                                                 (.userAgent "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.152 Safari/537.36")
-                                                 (.header "Content-Type","application/x-www-form-urlencoded")
-                                                 (.data "name" (:name user-data))
-                                                 (.data "email" (:email user-data))
-                                                 (.data "password" (:password user-data))
-                                                 (.data "repeat-password" (:password user-data))
-                                                 (.data "sing-up-submit" "Sign up")
-                                                 (.post))]
+                                 
+                                 (let [response (-> @(client/request {:url "http://localhost:3001/signup"
+                                                                     :method :post             ; :post :put :head or other
+                                                                     :user-agent "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.152 Safari/537.36"
+                                                                     :headers {"Content-Type" "application/x-www-form-urlencoded"}
+                                                                     :form-params {"name" (:name user-data)
+                                                                                   "email" (:email user-data)
+                                                                                   "password" (:password user-data)
+                                                                                   "repeat-password" (:password user-data)
+                                                                                   "sing-up-submit" "Sign up"}})
+                                                    :body
+                                                    Jsoup/parse)]
                                    (-> response
                                        (.select "body")
                                        (.select "div")
@@ -82,7 +83,9 @@
                            (fact "Activate it"
                                  (let [activation-uri (:activation-link (storage/fetch (-> stores/stores :account-store)
                                                                                        (:email user-data)))
-                                       response (.get (Jsoup/connect activation-uri))]
+                                       response (-> @(client/get activation-uri)
+                                                    :body
+                                                    Jsoup/parse)]
                                    (-> response
                                        (.select "body")
                                        (.select "h1")
@@ -90,21 +93,27 @@
                                    => (str "Account activated - " (:email user-data))))
 
                            (fact "Log in"
-                                 (let [response (->
-                                                 (Jsoup/connect "http://localhost:3001/login")
-                                                 (.userAgent "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.152 Safari/537.36")
-                                                 (.header "Content-Type","application/x-www-form-urlencoded")
-                                                 (.data "username" (:email user-data))
-                                                 (.data "password" (:password user-data))
-                                                 (.data "login-submit" "Login")
-                                                 (.post))]
-                                   (-> response
+                                 (let [response @(client/request {:url "http://localhost:3001/login"
+                                                                  :method :post             ; :post :put :head or other
+                                                                  :user-agent "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.152 Safari/537.36"
+                                                                  :headers {"Content-Type" "application/x-www-form-urlencoded"}
+                                                                  :form-params {"username" (:email user-data)
+                                                                                "password" (:password user-data)
+                                                                                "login-submit" "Login"}
+                                                                  :follow-redirects true
+                                                                  :max-redirects 10})
+                                       body (-> response
+                                                :body
+                                                Jsoup/parse)]
+                                   (:status response) => 301
+                                   #_(@(client/get ))
+                                   (-> body
                                        (.select "div.balance")
                                        (.select "h2")
                                        (.text))
                                    =>  "0"))
 
-                           (fact "Log out"
+                           #_(fact "Log out"
                                  (let [response (.get (Jsoup/connect "http://localhost:3001/logout"))]
                                    (-> response
                                        (.select "body")
@@ -112,7 +121,7 @@
                                        (.text))
                                    => "Login"))
 
-                           (fact "Cannot access the wallet page if not logged in - redirected to login"
+                           #_(fact "Cannot access the wallet page if not logged in - redirected to login"
                                  (let [response (.get (Jsoup/connect (str "http://localhost:3001/wallet/" (:email user-data))))]
                                    (-> response
                                        (.select "body")
