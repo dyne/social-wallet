@@ -99,7 +99,7 @@
   "render an error message without ending the page"
   [err]
   (log/error "Error occured: " err)
-  [:div {:class "alert alert-danger" :role "alert"}
+  [:div {:class "toast toast-error" :role "alert"}
    [:span {:class "far fa-meh"
            :aria-hidden "true" :style "padding: .5em"}]
    [:span {:class "sr-only"} "Error:"]
@@ -110,6 +110,7 @@
   ([err] (render-error-page {} err))
   ([session error]
    (render
+    session
     [:div {:class "container-fluid"}
      (render-error error)
      (if-not (empty? session)
