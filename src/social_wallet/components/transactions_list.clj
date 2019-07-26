@@ -4,7 +4,10 @@
    [social-wallet.swapi :as swapi]
    [social-wallet.webpage :refer [render-error]]
    [clj-time.format :as ft]
+   [clavatar.core :as clavatar]
+   [social-wallet.stores :as stores]
    [taoensso.timbre :as log]
+   [just-auth.db.account :as auth]
    [failjure.core :as f]))
 
 (def formatter (ft/formatter "dd MMMM, yyyy"))
@@ -20,32 +23,58 @@
                                                      (map #(:tags %) (:transactions response))))))]
 
                  [:div
-                    [:div.filter-nav
-                     [:a {:href (str uri)} [:label.chip "All"]]
-                     (for [t tags]
-                       [:a {:href (str uri "?tag=" t)} [:label.chip t]])]
-
-                  [:table.func--transactions-page--table.table.table-striped
-                   [:thead
-                    [:tr
-        ;; TODO: from transation
-                     [:th "From"]
-                     [:th "To"]
-                     [:th "Amount"]
-                     [:th "Time"]
-                     [:th "Description"]
-                     [:th "Tags"]]]
-                   [:tbody
-                    (doall (for [t transactions]
-                             [:tr.filter-item
-                              [:td (:from-id t)]
-                              [:td (:to-id t)]
-                              [:td (:amount-text t)]
-                              [:td.minwidth (ft/unparse formatter (ft/parse (:timestamp t)))]
-                              [:td (:description t)]
-                              [:td (for [tag (:tags t)] (if (> (count tag) 0) [:div.chip tag] [:div]))]]))]]
+                  [:div.filter-nav
+                   [:a {:href (str uri)} [:label.chip "All"]]
+                   (for [t tags]
+                     [:a {:href (str uri "?tag=" t)} [:label.chip t]])]
+                  
+                  ; <div class= "tile" >
+                  ; <div class= "tile-icon" >
+                  ; <div class= "example-tile-icon" >
+                  ; <i class= "icon icon-file centered" ></i>
+                  ; </div>
+                  ; </div>
+                  ; <div class= "tile-content" >
+                  ; <p class= "tile-title" >The Avengers</p>
+                  ; <p class= "tile-subtitle" >Earth's Mightiest Heroes joined forces to take on threats that were too big for any one hero to tackle...</p>
+                  ; </div>
+                  ; <div class= "tile-action" >
+                  ; <button class= "btn btn-primary" >Join</button>
+                  ; </div>(auth/get-account authenticator auth)
+                  ; </div>
+                  [:div.feeds (doall (for [t transactions]
+                                       
+                                       [:div [:div.tile.feed
+                                              [:div.tile-icon
+                                               [:figure.avatar.avatar-lg
+                                                [:img {:src (clavatar/gravatar (:from-id t) :size 87 :default :mm)}]]]
+                                              [:div.tile-content
+                                               [:p.tile-title [:b (:name (auth/fetch (:account-store stores/stores)  (:from-id t)))] " sent " [:b (:amount-text t)] " " (:currency t) " to " [:b (:name (auth/fetch (:account-store stores/stores)  (:to-id t)))]]
+                                               [:p.tile-subtitle (:description t)]
+                                               [:div.clearfix
+                                                [:p.text-gray.float-left (ft/unparse formatter (ft/parse (:timestamp t)))]
+                                                [:div.float-left (for [tag (:tags t)] (if (> (count tag) 0) [:div.chip tag] [:div]))]]]]
+                                        [:div.divider]]))]
+        ;           [:table.func--transactions-page--table.table.table-striped
+        ;            [:thead
+        ;             [:tr
+        ; ;; TODO: from transation
+        ;              [:th "From"]
+        ;              [:th "To"]
+        ;              [:th "Amount"]
+        ;              [:th "Time"]
+        ;              [:th "Description"]
+        ;              [:th "Tags"]]]
+        ;            [:tbody
+        ;             (doall (for [t transactions]
+        ;                      [:tr.filter-item
+        ;                       [:td (:from-id t)]
+        ;                       [:td (:to-id t)]
+        ;                       [:td (:amount-text t)]
+        ;                       [:td.minwidth (ft/unparse formatter (ft/parse (:timestamp t)))]
+        ;                       [:td.text-ellipsis (:description t)]
+        ;                       [:td (for [tag (:tags t)] (if (> (count tag) 0) [:div.chip tag] [:div]))]]))]]
                   (when (and (integer? total) (empty? (:tags query-params)))
-                    (pagination total (or (:page query-params) 1) uri)
-                    )]
+                    (pagination total (or (:page query-params) 1) uri))]
                  (f/when-failed [response]
                                 (render-error response))))
