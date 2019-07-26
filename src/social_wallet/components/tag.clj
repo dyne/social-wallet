@@ -21,7 +21,7 @@
            [:tbody
             (doall (for [t tags]
                      [:tr
-                      [:td [:a {:href (str "/transactions/tag/" (:tag t))} [:div.chip (:tag t)]]]
+                      [:td [:div.chip (:tag t)]]
                       [:td (:count t)]
                       [:td (:amount t)]
                       [:td (:created-by t)]
