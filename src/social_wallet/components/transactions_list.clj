@@ -20,11 +20,10 @@
                                                      (map #(:tags %) (:transactions response))))))]
 
                  [:div
-                  (if (not (= nil tag))
-                    [:h1 (str "Transactions for " tag)]
                     [:div.filter-nav
+                     [:a {:href (str uri)} [:label.chip "All"]]
                      (for [t tags]
-                       [:a {:href (str "/transactions/tag/" t)} [:label.chip t]])])
+                       [:a {:href (str uri "?tag=" t)} [:label.chip t]])]
 
                   [:table.func--transactions-page--table.table.table-striped
                    [:thead
@@ -45,7 +44,7 @@
                               [:td.minwidth (ft/unparse formatter (ft/parse (:timestamp t)))]
                               [:td (:description t)]
                               [:td (for [tag (:tags t)] (if (> (count tag) 0) [:div.chip tag] [:div]))]]))]]
-                  (when (integer? total)
+                  (when (and (integer? total) (empty? (:tags query-params)))
                     (pagination total (or (:page query-params) 1) uri)
                     )]
                  (f/when-failed [response]

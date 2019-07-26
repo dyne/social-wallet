@@ -56,9 +56,10 @@
 
   (GET "/" request
     (let [{{:keys [auth]} :session}  request
-          {{:keys [page per-page]} :params} request]
+          {{:keys [page per-page tag]} :params} request]
       (if (and auth (auth/get-account authenticator auth))
         (wallet-page auth (c/get-swapi-params) (:uri request) (cond-> {}
+                                                                tag (assoc :tags (list tag))
                                                                 page (assoc :page page)
                                                                 per-page (assoc :per-page per-page)))
         (web/render login-form))))
@@ -109,12 +110,13 @@
 
   (GET "/transactions" request
     (let [{{:keys [auth]} :session} request
-          {{:keys [page per-page]} :params} request]
+          {{:keys [page tag per-page]} :params} request]
       (f/if-let-ok? [auth-resp (logged-in? auth)]
                     (web/render auth (transactions auth
                                                    nil
                                                    (c/get-swapi-params)
                                                    (cond-> {}
+                                                     tag (assoc :tags (list tag))
                                                      page (assoc :page page)
                                                      per-page (assoc :per-page per-page))
                                                    (:uri request)))
@@ -265,6 +267,7 @@
      (f/when-failed [e]
            ;; TODO: make it appear in form
                     (web/render-error-page
+                     auth
                      (str "Error in send request: " (f/message e))))))
   (route/resources "/")
   (route/not-found "<h1>Page not found</h1>"))
