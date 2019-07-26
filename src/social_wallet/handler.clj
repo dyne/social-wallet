@@ -55,9 +55,12 @@
 (defroutes app-routes
 
   (GET "/" request
-    (let [{{:keys [auth]} :session}  request]
+    (let [{{:keys [auth]} :session}  request
+          {{:keys [page per-page]} :params} request]
       (if (and auth (auth/get-account authenticator auth))
-        (wallet-page auth (c/get-swapi-params) (:uri request))
+        (wallet-page auth (c/get-swapi-params) (:uri request) (cond-> {}
+                                                                page (assoc :page page)
+                                                                per-page (assoc :per-page per-page)))
         (web/render login-form))))
 
 

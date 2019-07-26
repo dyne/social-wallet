@@ -11,7 +11,7 @@
             [social-wallet.components.head :refer [render-head]]
             [failjure.core :as f]))
 
-(defn wallet-page [account swapi-params uri]
+(defn wallet-page [account swapi-params uri pagination]
   (let [email (:email account)]
     {:headers {"Content-Type"
                "text/html; charset=utf-8"}
@@ -45,5 +45,5 @@
              [:div {:style "margin-top: 60px"}
 
               [:div.divider.text-left {:data-content "YOUR TRANSACTIONS"}]
-              (transactions account nil swapi-params {} uri)]
+              (transactions account nil swapi-params pagination uri)]
              (footer)])}))
