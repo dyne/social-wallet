@@ -1,6 +1,11 @@
 (ns social-wallet.components.tag
   (:require [social-wallet.swapi :as swapi]
+            [clj-time.format :as ft]
             [failjure.core :as f]))
+
+
+(def formatter (ft/formatter "dd MMMM, yyyy"))
+
 
 (defn render-tags [swapi-params query-params uri]
   (f/if-let-ok? [tags (swapi/list-tags swapi-params {})]
@@ -20,5 +25,5 @@
                       [:td (:count t)]
                       [:td (:amount t)]
                       [:td (:created-by t)]
-                      [:td (:created t)]]))]]]
+                      [:td (ft/unparse formatter (ft/parse (:created t)))]]))]]]
     (f/message tags)))
