@@ -6,7 +6,7 @@
     [:div.column.col-6.col-md-12
      [:div.card
       [:div.card-header
-       [:div.card-title.h5 "Login"]
+       [:div.card-title.h5.card-login "Login"]
        [:div.card-subtitle.text-gray "Welcome back to your social wallet"]]
       [:div.card-body
        [:form {:action "/login"

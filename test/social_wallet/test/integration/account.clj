@@ -23,18 +23,27 @@
              [webpage :as web]
              [stores :as stores]]
             [clj-storage.core :as storage]
-
+            [clj-http.client :as client]
             [mount.core :as mount]
             [taoensso.timbre :as log])
 
-  (:import [org.jsoup Jsoup]
-           [org.jsoup.nodes Document]
-           [org.jsoup Connection$Method Connection$Response]))
+  (:import 
+   (org.apache.http.client.protocol HttpClientContext)
+   [org.jsoup Jsoup]
+   [org.jsoup.nodes Document]
+   [org.jsoup Connection$Method Connection$Response]))
 
 (def user-data {:name "user1"
                 :email "user@mail.com"
                 :password "12345678"})
 (def server (atom nil))
+
+
+
+(def http-context 
+  (-> (HttpClientContext/create)
+      (.setUserToken {:auth {:email "test@mail.com"}}))
+  )
 
 (against-background [(before :contents (mount/start-with-args {:port 3001
                                                                :host "http://localhost"
@@ -90,33 +99,34 @@
                                    => (str "Account activated - " (:email user-data))))
 
                            (fact "Log in"
-                                 (let [response (->
-                                                 (Jsoup/connect "http://localhost:3001/login")
-                                                 (.userAgent "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.152 Safari/537.36")
-                                                 (.header "Content-Type","application/x-www-form-urlencoded")
-                                                 (.data "username" (:email user-data))
-                                                 (.data "password" (:password user-data))
-                                                 (.data "login-submit" "Login")
-                                                 (.post))]
+                                 (let [response 
+                                       (->
+                                        (Jsoup/connect "http://localhost:3001/login")
+                                        (.userAgent "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.152 Safari/537.36")
+                                        (.header "Content-Type","application/x-www-form-urlencoded")
+                                        (.data "username" (:email user-data))
+                                        (.data "password" (:password user-data))
+                                        (.data "login-submit" "Login")
+                                        (.post))]
                                    (-> response
                                        (.select "div.balance")
                                        (.select "h2")
                                        (.text))
-                                   =>  "0"))
+                                   =>  "Total balance: 0"))
 
                            (fact "Log out"
                                  (let [response (.get (Jsoup/connect "http://localhost:3001/logout"))]
                                    (-> response
                                        (.select "body")
-                                       (.select "div.card-title")
+                                       (.select "div.card-login")
                                        (.text))
                                    => "Login"))
 
                            (fact "Cannot access the wallet page if not logged in - redirected to login"
-                                 (let [response (.get (Jsoup/connect (str "http://localhost:3001/wallet/" (:email user-data))))]
+                                 (let [response (.get (Jsoup/connect "http://localhost:3001/sendto"))]
                                    (-> response
                                        (.select "body")
                                        (.select "div")
-                                       (.select "div.alert")
+                                       (.select "div.toast")
                                        (.text))
                                    => "Error:Please log in to be able to access this info"))))
