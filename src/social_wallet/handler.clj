@@ -120,7 +120,7 @@
                                                      page (assoc :page page)
                                                      per-page (assoc :per-page per-page))
                                                    (:uri request)))
-                    (web/render-error-page (f/message auth-resp)))))  
+                    (web/render-error-page (f/message auth-resp)))))
 
   (GET "/participants" request
     (let [{{:keys [auth]} :session} request]
@@ -173,6 +173,7 @@
      (f/when-failed [e]
                     (web/render-error-page
                      (str "Sign-up failure: " (f/message e))))))
+
   (GET "/activate/:email/:activation-id"
     [email activation-id :as request]
     (let [activation-uri
@@ -210,7 +211,7 @@
                     (web/render auth (qrcode-page (:email auth)))
                     (web/render-error-page (f/message auth-resp)))))
 
-  
+
   (GET "/sendto" request
     (let [{{:keys [auth]} :session} request]
       (f/if-let-ok? [auth-resp (logged-in? auth)]
@@ -227,30 +228,34 @@
                     (web/render auth (render-sendTo email))
                     (web/render-error-page (f/message auth-resp)))))
 
-  (POST "/sendto" {{:keys [amount to tags description]} :params
-                   {:keys [auth]} :session}
-    (f/attempt-all
+  (POST "/sendto" request
+    (let [{{:keys [amount to tags description]} :params} request
+          {{:keys [auth]} :session} request
+          {{:keys [page tag per-page]} :params} request]
+      (f/attempt-all
          ;; TODO: specs dont work
-     [parsed-amount (u/spec->failjure ::amount amount #(BigDecimal. %))
-      parsed-to (u/spec->failjure ::to to)
-      parsed-tags (u/spec->failjure ::tags tags #(clojure.string/split % #","))
-      sender-balance (swapi/balance (c/get-swapi-params) {:email (:email auth)})]
-     (if (or
-          (>= (- sender-balance parsed-amount) 0)
-          (some #{:admin} (:flags (auth/get-account authenticator (:email auth)))))
-       (do (swapi/sendto (c/get-swapi-params) {:amount amount
-                                               :to to
-                                               :description description
-                                               :from (:email auth)
-                                               :tags parsed-tags})
+       [parsed-amount (u/spec->failjure ::amount amount #(BigDecimal. %))
+        parsed-to (u/spec->failjure ::to to)
+        parsed-tags (u/spec->failjure ::tags tags #(clojure.string/split % #","))
+        sender-balance (swapi/balance (c/get-swapi-params) {:email (:email auth)})]
+       (if (or
+            (>= (- sender-balance parsed-amount) 0)
+            (some #{:admin} (:flags (auth/get-account authenticator (:email auth)))))
+         (do (swapi/sendto (c/get-swapi-params) {:amount amount
+                                                 :to to
+                                                 :description description
+                                                 :from (:email auth)
+                                                 :tags parsed-tags})
                ;; TODO: here we dont need the uri cause there is no paging needed.
-               ;; However passing nil is pretty bad
-           (wallet-page auth (c/get-swapi-params) nil))
-       (web/render-error-page "Not enough funds to make a transaction."))
-     (f/when-failed [e]
+             (wallet-page auth (c/get-swapi-params) (:uri request) (cond-> {}
+                                                                     tag (assoc :tags (list tag))
+                                                                     page (assoc :page page)
+                                                                     per-page (assoc :per-page per-page))))
+         (web/render-error-page "Not enough funds to make a transaction."))
+       (f/when-failed [e]
            ;; TODO: make it appear in form
-                    (web/render-error-page
-                     auth
-                     (str "Error in send request: " (f/message e))))))
+                      (web/render-error-page
+                       auth
+                       (str "Error in send request: " (f/message e)))))))
   (route/resources "/")
   (route/not-found "<h1>Page not found</h1>"))
