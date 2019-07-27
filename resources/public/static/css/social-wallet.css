@@ -134,10 +134,11 @@ footer .navbar-section a img {
 
 
 .wallet-card {
-	margin-bottom: 24px;
-	background: #f9f9f9;
-    border-radius: 6px;
-	padding-top: 16px;
+	margin-bottom: 16px;
+	background: #7f7fe2;
+	background-image: linear-gradient(to right, #ffc3a0 0%, #ffafbd 100%);
+    border-radius: 16px;
+	padding: 32px;
 }
 
 .wallet-card .avatar {
@@ -148,10 +149,12 @@ footer .navbar-section a img {
 
 .wallet-card .panel-title {
 	font-size: 32px;
+	color: white;
 }
 
 .wallet-card .panel-subtitle {
 	font-size: 18px;
+	color: white;
 	margin-top: 8px;
 }
 
@@ -161,13 +164,12 @@ footer .navbar-section a img {
 
 .balance {
     padding: 16px;
-	border-top: 1px solid #dadada;
-    margin-top: 24px;
-    background: #eaedef;
+    margin-top: 16px;
 }
 
 .balance h2 {
 	margin: 0;
+	font-size: 16px;
 }
 
 .balance h3 {
@@ -234,6 +236,21 @@ footer .navbar-section a img {
 }
 
 
+.info-login {
+	border: none;
+    background: rgb(245, 248, 250);
+}
+
+.info-login .card-image {
+	margin: 16px;
+}
+
+.info-login .card-image img {
+	width: 300px;
+    margin: 0 auto;
+    margin-top: 16px;
+}
+
 /* RESPONSIVE */
 @media screen and (max-width: 840px) {
 	.card-info {
@@ -241,13 +258,7 @@ footer .navbar-section a img {
 		float: none !important;
 	}
 
-	.balance {
-		display: block;
-		float: none !important;
-		margin-top: 16px;
-		text-align: center;
-	}
-
+	
 	.qrcode {
 		margin: 0 auto;
 		float: none !important;

@@ -2,7 +2,6 @@
   (:require [hiccup.page :as page]
             [auxiliary.translation :as t]
             [clavatar.core :as clavatar]
-            
             [social-wallet.swapi :as swapi]
             [social-wallet.components.transactions_list :refer [transactions]]
             [social-wallet.components.footer :refer [footer]]
@@ -26,17 +25,14 @@
                  [:img {:src (clavatar/gravatar email :size 87 :default :mm)}]]
                 [:div.panel-title.h5.mt-10
                  (:name account)]
-                [:div.panel-subtitle.text-gray
+                [:div.panel-subtitle
                  [:i.icon.icon-mail] email]]
                [:div.info.clearfix.text-center
                 (f/if-let-ok? [balance (swapi/balance swapi-params
                                                       (select-keys account [:email]))]
-                              [:div.balance
-
-                               [:span {:class "func--account-page--balance"}]
-                               [:h3 "👛"]
-                               [:h2 balance]
-                               [:h4 (str (t/locale [:wallet :balance]))]]
+                              [:div.chip.balance
+                               [:span "👛"]
+                               [:h2 (str (t/locale [:wallet :balance]) ": " balance)]]
                               (render-error balance))
                 ; [:span {:class "qrcode"}
                 ;  [:img {:src (hu/url  "/qrcode/" email)}]]
