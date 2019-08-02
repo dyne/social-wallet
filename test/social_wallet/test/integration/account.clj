@@ -23,12 +23,12 @@
              [webpage :as web]
              [stores :as stores]]
             [clj-storage.core :as storage]
-            [clj-http.client :as client]
+            [ring.util.response :refer [redirect]]
+            [org.httpkit.client :as client]
             [mount.core :as mount]
             [taoensso.timbre :as log])
 
   (:import 
-   (org.apache.http.client.protocol HttpClientContext)
    [org.jsoup Jsoup]
    [org.jsoup.nodes Document]
    [org.jsoup Connection$Method Connection$Response]))
@@ -38,12 +38,6 @@
                 :password "12345678"})
 (def server (atom nil))
 
-
-
-(def http-context 
-  (-> (HttpClientContext/create)
-      (.setUserToken {:auth {:email "test@mail.com"}}))
-  )
 
 (against-background [(before :contents (mount/start-with-args {:port 3001
                                                                :host "http://localhost"
@@ -98,7 +92,7 @@
                                        (.text))
                                    => (str "Account activated - " (:email user-data))))
 
-                           (fact "Log in"
+                           (facts "Log in"
                                  (let [response 
                                        (->
                                         (Jsoup/connect "http://localhost:3001/login")
@@ -112,7 +106,11 @@
                                        (.select "div.balance")
                                        (.select "h2")
                                        (.text))
-                                   =>  "Total balance: 0"))
+                                   =>  "Total balance: 0"
+                                 ))
+
+                          
+                                 
 
                            (fact "Log out"
                                  (let [response (.get (Jsoup/connect "http://localhost:3001/logout"))]
