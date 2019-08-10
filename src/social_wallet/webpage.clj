@@ -113,10 +113,12 @@
     session
     [:div {:class "container-fluid"}
      (render-error error)
-     (if-not (empty? session)
-       [:div {:class "config"}
-        [:h2 "Environment dump:"]
-        (render-yaml session)])])))
+    ;  (if-not (empty? session)
+    ;    [:div {:class "config"}
+    ;     [:h2 "Environment dump:"]
+    ;     (render-yaml session)])
+     
+     ])))
 
 
 
