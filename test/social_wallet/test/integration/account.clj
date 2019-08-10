@@ -17,16 +17,23 @@
 
 (ns social-wallet.test.integration.account
   (:require [midje.sweet :refer [against-background before after facts fact =>]]
+            [clojure.java.io :as io]
             [social-wallet
              [core :as sc]
              [handler :as h]
+             [swapi :as swapi]
+             [config :refer [config] :as c]
              [webpage :as web]
+             [authenticator :refer [authenticator]]
              [stores :as stores]]
-            [clj-storage.core :as storage]
+            [clj-storage.core :as storage :refer [Store]]
+            [etaoin.keys :as k]
+            [clojure.test :refer :all]
             [ring.util.response :refer [redirect]]
             [org.httpkit.client :as client]
             [mount.core :as mount]
             [taoensso.timbre :as log])
+  (:use [etaoin.api])
 
   (:import 
    [org.jsoup Jsoup]
@@ -34,9 +41,15 @@
    [org.jsoup Connection$Method Connection$Response]))
 
 (def user-data {:name "user1"
-                :email "user@mail.com"
+                :email "test@mail.com"
                 :password "12345678"})
-(def server (atom nil))
+
+(def admin-data {:name "admin"
+                :email "admin@mail.com"
+                :password "12345678"})
+
+
+(def driver (firefox)) ;; here, a Firefox window should appear
 
 
 (against-background [(before :contents (mount/start-with-args {:port 3001
@@ -49,82 +62,141 @@
                                         (storage/empty-db-stores! stores/stores)
                                         (mount/stop)))]
 
-                    (facts "Create and account, activate it, login and logout."
-                           (fact "create and account"
-                                 (let [response (.get (Jsoup/connect "http://localhost:3001/signup"))]
-                                   (-> response
-                                       (.select "form")
-                                       first
-                                       (.select "[name$=sign-up-submit]")
-                                       (.hasClass "btn"))
-                                   => true
+                    (let [driver (firefox)]
+                      (go driver "http://localhost:3001")
+                      (click driver {:tag :a :id :signup})
+                      (fill driver {:tag :input :name :name} (:name user-data))
+                      (fill driver {:tag :input :name :email} (:email user-data))
+                      (fill driver {:tag :input :name :password} (:password user-data))
+                      (fill driver {:tag :input :name :repeat-password} (:password user-data))
+                      (click driver {:tag :input :name :sign-up-submit})
 
-                                   (-> response
-                                       (.select "form")
-                                       first
-                                       (.select "[placeholder$=Name]")
-                                       first
-                                       (.id))
-                                   => "name")
-                                 (let [response (->
-                                                 (Jsoup/connect "http://localhost:3001/signup")
-                                                 (.userAgent "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.152 Safari/537.36")
-                                                 (.header "Content-Type","application/x-www-form-urlencoded")
-                                                 (.data "name" (:name user-data))
-                                                 (.data "email" (:email user-data))
-                                                 (.data "password" (:password user-data))
-                                                 (.data "repeat-password" (:password user-data))
-                                                 (.data "sing-up-submit" "Sign up")
-                                                 (.post))]
-                                   (-> response
-                                       (.select "body")
-                                       (.select "div")
-                                       (.select "h2")
-                                       (.text)) => (str "Account created: " (:name user-data) " <" (:email user-data) ">")))
+                      (fact "As a user I can signup"
+                            (has-text? driver (str "Account created: " (:name user-data) " <" (:email user-data) ">"))
+                            => true)
 
-                           (fact "Activate it"
-                                 (let [activation-uri (:activation-link (storage/fetch (-> stores/stores :account-store)
-                                                                                       (:email user-data)))
-                                       response (.get (Jsoup/connect activation-uri))]
-                                   (-> response
-                                       (.select "body")
-                                       (.select "h1")
-                                       (.text))
-                                   => (str "Account activated - " (:email user-data))))
+                      (fact "As a user I can activate my account"
+                            (let [activation-uri (:activation-link (storage/fetch (-> stores/stores :account-store)
+                                                                                  (:email user-data)))]
+                              (go driver activation-uri)
+                              (has-text? driver (str "Account activated - " (:email user-data))))
+                            => true)
 
-                           (facts "Log in"
-                                 (let [response 
-                                       (->
-                                        (Jsoup/connect "http://localhost:3001/login")
-                                        (.userAgent "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.152 Safari/537.36")
-                                        (.header "Content-Type","application/x-www-form-urlencoded")
-                                        (.data "username" (:email user-data))
-                                        (.data "password" (:password user-data))
-                                        (.data "login-submit" "Login")
-                                        (.post))]
-                                   (-> response
-                                       (.select "div.balance")
-                                       (.select "h2")
-                                       (.text))
-                                   =>  "Total balance: 0"
-                                 ))
 
-                          
-                                 
+                      (click driver {:tag :a :id :login})
+                      (fill driver {:tag :input :name :email} (:email user-data))
+                      (fill driver {:tag :input :name :password} (:password user-data))
+                      (click driver {:tag :input :name :login-submit})
 
-                           (fact "Log out"
-                                 (let [response (.get (Jsoup/connect "http://localhost:3001/logout"))]
-                                   (-> response
-                                       (.select "body")
-                                       (.select "div.card-login")
-                                       (.text))
-                                   => "Login"))
+                      (fact "As a user I can login into the webapp"
+                            (has-text? driver "Total balance: 0") => true)
 
-                           (fact "Cannot access the wallet page if not logged in - redirected to login"
-                                 (let [response (.get (Jsoup/connect "http://localhost:3001/sendto"))]
-                                   (-> response
-                                       (.select "body")
-                                       (.select "div")
-                                       (.select "div.toast")
-                                       (.text))
-                                   => "Error:Please log in to be able to access this info"))))
+                      (fact "As a user I do not see the admin badge on my profile"
+                            (has-text? driver "Admin") => false)
+
+                      (fact "As a user I can check my profile page if logged"
+                            (has-text? driver (:name user-data)) => true)
+
+                      (fact "As a user I can check the form to send amount if logged"
+                            (click driver {:tag :a :id :sendto})
+                            (has-text? driver "Send tokens") => true)
+                      (fact "As a user I can check the participants list if logged"
+                            (click driver {:tag :a :id :participants})
+                            (has-text? driver "Other names") => true)
+                      (fact "As a user I can check the tags list if logged"
+                            (click driver {:tag :a :id :tags})
+                            (has-text? driver "Tag") => true)
+
+                      (fact "As a user I can check the transactions list if logged"
+                            (click driver {:tag :a :id :transactions})
+                            (has-text? driver "All")
+                            => true)
+
+
+                      (fact "As an admin I can have negative balance"
+                            (click driver {:tag :a :id :dropdown})
+                            (wait-visible driver {:tag :a :id :logout})
+                            (click driver {:tag :a :id :logout})
+                            (wait-visible driver {:tag :a :id :signup})
+                            (click driver {:tag :a :id :signup})
+                            (fill driver {:tag :input :name :name} (:name admin-data))
+                            (fill driver {:tag :input :name :email} (:email admin-data))
+                            (fill driver {:tag :input :name :password} (:password admin-data))
+                            (fill driver {:tag :input :name :repeat-password} (:password admin-data))
+                            (click driver {:tag :input :name :sign-up-submit})
+                            (let [activation-uri (:activation-link (storage/fetch (-> stores/stores :account-store)
+                                                                                  (:email admin-data)))]
+                              (go driver activation-uri)
+                              (storage/update! (-> stores/stores :account-store) (:email admin-data) (fn [account] (update account :flags #(conj % :admin))))
+                              (wait-visible driver {:tag :a :id :login})
+                              (click driver {:tag :a :id :login})
+                              (fill driver {:tag :input :name :email} (:email admin-data))
+                              (fill driver {:tag :input :name :password} (:password admin-data))
+                              (click driver {:tag :input :name :login-submit})
+                              (click driver {:tag :a :id :sendto})
+                              (fill driver {:tag :input :name :amount} 10)
+                              (fill driver {:tag :input :name :to} (:email user-data))
+                              (fill driver {:tag :input :name :tags} "test, fake")
+                              (fill driver {:tag :textarea :name :description} "tokens are good")
+                              (click driver {:tag :input :name :sendto-submit}))
+                            (has-text? driver "Total balance: -10") => true)
+
+                      (fact "As an admin I can see the admin badge on my profile"
+                            (has-text? driver "Admin") => true)
+
+
+                      (fact "As a user I can receive some tokens"
+                            (click driver {:tag :a :id :dropdown})
+                            (wait-visible driver {:tag :a :id :logout})
+                            (click driver {:tag :a :id :logout})
+                            (wait-visible driver {:tag :a :id :login})
+                            (click driver {:tag :a :id :login})
+                            (fill driver {:tag :input :name :email} (:email user-data))
+                            (fill driver {:tag :input :name :password} (:password user-data))
+                            (click driver {:tag :input :name :login-submit})
+                            (has-text? driver "Total balance: 10") => true)
+
+                      (fact "As a user I can send tokens to another participants"
+                            (click driver {:tag :a :id :sendto})
+                            (fill driver {:tag :input :name :amount} 10)
+                            (fill driver {:tag :input :name :to} (:email admin-data))
+                            (fill driver {:tag :input :name :tags} "fake")
+                            (click driver {:tag :input :name :sendto-submit})
+                            (has-text? driver "Total balance: 0") => true)
+
+                      (fact "Send amount bigger than the user balance && check the correct error message"
+                            (click driver {:tag :a :id :sendto})
+                            (fill driver {:tag :input :name :amount} 10)
+                            (fill driver {:tag :input :name :to} (:email admin-data))
+                            (fill driver {:tag :input :name :tags} "fake")
+                            (click driver {:tag :input :name :sendto-submit})
+                            (has-text? driver "Not enough funds to make a transaction.")
+                            => true)
+
+                      (fact "Send a transaction to an invalid receiver && check the correct error message"
+                            (click driver {:tag :a :id :sendto})
+                            (fill driver {:tag :input :name :amount} 10)
+                            (fill driver {:tag :input :name :to} "Duane Allman")
+                            (fill driver {:tag :input :name :tags} "fake")
+                            (click driver {:tag :input :name :sendto-submit})
+                            (has-text? driver "The receiver is not a valid account.")
+                            => true)
+
+                      (fact "Send a transaction without receiver && check the correct error message"
+                            (click driver {:tag :a :id :sendto})
+                            (fill driver {:tag :input :name :amount} 10)
+                            (fill driver {:tag :input :name :tags} "fake")
+                            (click driver {:tag :input :name :sendto-submit})
+                            (has-text? driver "The receiver is not a valid account.")
+                            => true)
+
+                      (fact "As a user I can logout from the webapp"
+                            (click driver {:tag :a :id :dropdown})
+                            (wait-visible driver {:tag :a :id :logout})
+                            (click driver {:tag :a :id :logout})
+                            (has-text? driver "Your social wallet") => true)
+
+                      (fact "Authenticated page without an active session returns the correct error message"
+                            (go driver "http://localhost:3001/sendto")
+                            (has-text? driver "Please log in to be able to access this info") => true))
+                    )
