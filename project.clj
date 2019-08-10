@@ -37,6 +37,8 @@
                  [ring/ring-session-timeout "0.2.0"]
                  [ring-logger "1.0.1"]
                  
+                 [etaoin "0.3.5"]
+                 
                  ;; Readable time formatter lib
                  [clj-time "0.15.0"]
                  ;; json
@@ -62,8 +64,8 @@
                  [tolitius/mount-up "0.1.2" :exclusions [org.clojure/tools.logging]]
 
                  ;; HTTP server
-                 [http-kit "2.3.0"]
-
+                 [http-kit "2.3.0"]                 
+                                
                  ;; Gravatar
                  [clavatar "0.2.1"]
 
