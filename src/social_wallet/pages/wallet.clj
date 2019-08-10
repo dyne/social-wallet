@@ -2,7 +2,9 @@
   (:require [hiccup.page :as page]
             [auxiliary.translation :as t]
             [clavatar.core :as clavatar]
+            [just-auth.core :as auth]
             [social-wallet.swapi :as swapi]
+            [social-wallet.authenticator :refer [authenticator]]
             [social-wallet.components.transactions_list :refer [transactions]]
             [social-wallet.components.footer :refer [footer]]
             [social-wallet.webpage :refer [render-error]]
@@ -26,7 +28,11 @@
                 [:div.panel-title.h5.mt-10
                  (:name account)]
                 [:div.panel-subtitle
-                 [:i.icon.icon-mail] email]]
+                 [:i.icon.icon-mail] email]
+                (if (some #{:admin} (:flags (auth/get-account authenticator email)))
+                  [:div.chip "Admin"]
+                  [:div])
+                ]
                [:div.info.clearfix.text-center
                 (f/if-let-ok? [balance (swapi/balance swapi-params
                                                       (select-keys account [:email]))]
