@@ -36,11 +36,13 @@
             [social-wallet.components.sendTo :refer [render-sendTo]]
             [social-wallet.components.login :refer [login-form]]
             [social-wallet.components.signup :refer [signup-form]]
-
             [social-wallet.pages.wallet :refer [wallet-page]]
+            [buddy.hashers :as hashers]
 
             [just-auth.core :as auth]
-
+            [just-auth.db
+             [account :as account]
+             [password-recovery :as pr]]
             [taoensso.timbre :as log]))
 
 (defn get-host [port] (if port
@@ -86,9 +88,9 @@
 
   (POST "/login" request
     (f/attempt-all
-     [username (-> request :params :username)
+     [email (-> request :params :email)
       password (-> request :params :password)
-      account (auth/sign-in  authenticator username password {})]
+      account (auth/sign-in  authenticator email password {})]
          ;; TODO: pass :ip-address in last argument map
      (let [session {:auth account}]
        (-> (redirect "/")
@@ -144,6 +146,8 @@
   (GET "/signup" request
     (web/render signup-form))
 
+  
+
   (POST "/signup" request
     (f/attempt-all
      [name (-> request :params :name)
@@ -174,6 +178,8 @@
                     (web/render-error-page
                      (str "Sign-up failure: " (f/message e))))))
 
+  
+
   (GET "/activate/:email/:activation-id"
     [email activation-id :as request]
     (let [activation-uri
@@ -192,9 +198,12 @@
            [:h2 (f/message act)]
            [:p (str "Email: " email " activation-id: " activation-id)]])
          [:h1 (str "Account activated - " email)])])))
+
   (GET "/qrcode/:email"
     [email :as request]
     (qrcode/transact-to email  (get-host (:link-port (mount/args)))))
+
+
   (GET "/session" request
     (-> (:session request) web/render-yaml web/render))
 
@@ -238,20 +247,20 @@
         parsed-to (u/spec->failjure ::to to)
         parsed-tags (u/spec->failjure ::tags tags #(clojure.string/split % #","))
         sender-balance (swapi/balance (c/get-swapi-params) {:email (:email auth)})]
-       (if (or
-            (>= (- sender-balance parsed-amount) 0)
-            (some #{:admin} (:flags (auth/get-account authenticator (:email auth)))))
-         (do (swapi/sendto (c/get-swapi-params) {:amount amount
-                                                 :to to
-                                                 :description description
-                                                 :from (:email auth)
-                                                 :tags parsed-tags})
-               ;; TODO: here we dont need the uri cause there is no paging needed.
-             (wallet-page auth (c/get-swapi-params) (:uri request) (cond-> {}
-                                                                     tag (assoc :tags (list tag))
-                                                                     page (assoc :page page)
-                                                                     per-page (assoc :per-page per-page))))
-         (web/render-error-page "Not enough funds to make a transaction."))
+       (if (:activated (auth/get-account authenticator to))
+         (if (or
+              (>= (- sender-balance parsed-amount) 0)
+              (some #{:admin} (:flags (auth/get-account authenticator (:email auth)))))
+           (do (swapi/sendto (c/get-swapi-params) {:amount amount
+                                                   :to to
+                                                   :description description
+                                                   :from (:email auth)
+                                                   :tags parsed-tags})
+               (redirect "/"))
+           (web/render-error-page auth "Not enough funds to make a transaction."))
+         (web/render-error-page auth "The receiver is not a valid account.")
+         )
+       
        (f/when-failed [e]
            ;; TODO: make it appear in form
                       (web/render-error-page
