@@ -23,6 +23,10 @@ code {
 }
 
 
+.minwidth {
+	min-width: 150px;
+}
+
 
 img {
 	width: auto;
@@ -47,6 +51,10 @@ table.sortable td {
 
 .input-form {
 	clear: right;
+}
+
+table .text-ellipsis {
+	max-width: 150px;
 }
 
 li {
@@ -96,7 +104,7 @@ li {
 .header {
 	background: #f3f3f7;
     margin-top: 24px;
-    margin-bottom: 42px;
+    margin-bottom: 16px;
     padding: 8px;
     border-radius: 4px;
 }
@@ -126,62 +134,90 @@ footer .navbar-section a img {
 
 
 .wallet-card {
-	margin-bottom: 24px;
+	margin-bottom: 16px;
+	background: #7f7fe2;
+	background-image: linear-gradient(to right, #ffc3a0 0%, #ffafbd 100%);
+    border-radius: 16px;
+	padding: 32px;
 }
 
-.wallet-card .tile-icon img {
-	border-radius: 100px;
+.wallet-card .avatar {
+	border-radius: 120px;
+	width: 120px;
+	height: 120px;
 }
 
-.wallet-card .tile-title {
+.wallet-card .panel-title {
 	font-size: 32px;
+	color: white;
 }
 
-.wallet-card .tile-subtitle {
+.wallet-card .panel-subtitle {
 	font-size: 18px;
+	color: white;
 	margin-top: 8px;
 }
 
-.wallet-card .tile-subtitle i {
+.wallet-card .panel-subtitle i {
 	margin-right: 8px;
 }
 
 .balance {
-	border-radius: 4px;
     padding: 16px;
-    height: 87px;
-    border: 1px solid;
+    margin-top: 16px;
 }
 
-.qrcode {
-	margin-top: -20px
+.balance h2 {
+	margin: 0;
+	font-size: 16px;
+}
+
+.balance h3 {
+	margin: 0;
+}
+
+.balance h4 {
+	font-size: 12px;
+    text-transform: uppercase;
+    font-weight: 800;
+}
+
+.qrcode img {
+  margin: 0 auto;
+  text-align: center;
+  display: block;
 }
 
 
-
-.filter .filter-tag#tag-0:checked ~ .filter-nav .chip[for="tag-0"],
-.filter .filter-tag#tag-1:checked ~ .filter-nav .chip[for="tag-1"],
-.filter .filter-tag#tag-2:checked ~ .filter-nav .chip[for="tag-2"],
-.filter .filter-tag#tag-3:checked ~ .filter-nav .chip[for="tag-3"],
-.filter .filter-tag#tag-4:checked ~ .filter-nav .chip[for="tag-4"],
-.filter .filter-tag#tag-5:checked ~ .filter-nav .chip[for="tag-5"],
-.filter .filter-tag#tag-6:checked ~ .filter-nav .chip[for="tag-6"],
-.filter .filter-tag#tag-7:checked ~ .filter-nav .chip[for="tag-7"],
-.filter .filter-tag#tag-8:checked ~ .filter-nav .chip[for="tag-8"] {
-  background: #5755d9;
-  color: #fff;
+.feeds {
+	margin-top: 24px;
+	border-radius: 4px;
+	background: #f9f9f9
 }
 
-.filter .filter-tag#tag-1:checked ~ .filter-body .filter-item:not([data-tag~="tag-1"]),
-.filter .filter-tag#tag-2:checked ~ .filter-body .filter-item:not([data-tag~="tag-2"]),
-.filter .filter-tag#tag-3:checked ~ .filter-body .filter-item:not([data-tag~="tag-3"]),
-.filter .filter-tag#tag-4:checked ~ .filter-body .filter-item:not([data-tag~="tag-4"]),
-.filter .filter-tag#tag-5:checked ~ .filter-body .filter-item:not([data-tag~="tag-5"]),
-.filter .filter-tag#tag-6:checked ~ .filter-body .filter-item:not([data-tag~="tag-6"]),
-.filter .filter-tag#tag-7:checked ~ .filter-body .filter-item:not([data-tag~="tag-7"]),
-.filter .filter-tag#tag-8:checked ~ .filter-body .filter-item:not([data-tag~="tag-8"]) {
-  display: none;
+.feeds .feed {
+	padding: 16px;
+    padding-bottom: 0;
 }
+
+.feed .divider {
+	border-top: .05rem solid #e8e8e8;
+}
+
+.feed p.tile-title {
+	margin-bottom: 0;
+}
+
+.feed p.tile-subtitle {
+	margin: 0;
+}
+
+.feed .text-gray {
+	margin-top: 5px;
+    font-size: 14px;
+    margin-right: 16px;
+}
+
 
 .filter .filter-nav {
   margin: .4rem 0;
@@ -194,3 +230,41 @@ footer .navbar-section a img {
   -ms-flex-wrap: wrap;
   flex-wrap: wrap;
 }
+
+.maxwidth {
+	max-width: 200px;
+}
+
+
+.info-login {
+	border: none;
+    background: rgb(245, 248, 250);
+}
+
+.info-login .card-image {
+	margin: 16px;
+}
+
+.info-login .card-image img {
+	width: 300px;
+    margin: 0 auto;
+    margin-top: 16px;
+}
+
+/* RESPONSIVE */
+@media screen and (max-width: 840px) {
+	.card-info {
+		display: block;
+		float: none !important;
+	}
+
+	
+	.qrcode {
+		margin: 0 auto;
+		float: none !important;
+		width: 250px;
+		text-align: center;
+		height: 250px;
+		display: block;
+	}
+  }

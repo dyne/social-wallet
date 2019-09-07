@@ -39,10 +39,10 @@
   (if apikey-file
     (f/attempt-all [device (keyword apikey-name)
                     apikey (f/try* (-> apikey-file slurp yaml/parse-string device))
-                    response @(client/request {:url (str base-url "/" endpoint)
-                                               :method :post
-                                               :body json
-                                               :headers (assoc headers "x-api-key" apikey)})]
+                    response (f/try* @(client/request {:url (str base-url "/" endpoint)
+                                                      :method :post
+                                                      :body json
+                                                      :headers (assoc headers "x-api-key" apikey)}))]
                    (wrap-response response body-parse-fn)                                      
                    (f/when-failed [apikey]
                      (f/message apikey)))
@@ -79,6 +79,7 @@
                            (:amount params) (assoc :amount (:amount params))
                            (:from params) (assoc :from-id (:from params))
                            (:to params) (assoc :to-id (:to params))
+                           (not (empty? (:description params))) (assoc :description (:description params))
                            (not (empty? (:tags params))) (assoc :tags (:tags params))))
                   :body-parse-fn #(-> % :body)}))
 
@@ -89,6 +90,7 @@
                          (cond-> {:connection "mongo"
                                   :type "db-only"}
                            (:account params) (assoc :account-id (:account params))
+                            (not (empty? (:tags params))) (assoc :tags (:tags params))
                            (:page params) (assoc :page (Long/parseLong (:page params)))
                            (:per-page params) (assoc :page (Long/parseLong (:per-page params)))))
                   :body-parse-fn #(-> % :body (json/read-str :key-fn keyword))}))

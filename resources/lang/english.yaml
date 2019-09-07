@@ -8,7 +8,7 @@ wallet:
   welcome: "Welcome to the Common Coin"
   name: "Name"
   email: "Email"
-  balance: "Balance"
+  balance: "Total balance"
   send: "Send amount"
   list: "List transactions"
   participants: "List participants"
@@ -56,3 +56,4 @@ navbar:
   transactions: "All transactions"
   participants: "All participants"
   tags: "All tags"
+  qrcode: "Show QRcode"
