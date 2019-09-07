@@ -16,4 +16,4 @@ jdk:
 services:
   - mongod
 addons:
-  firefox: "45.4.0esr"
+  firefox: "62.0.02"
