@@ -7,13 +7,12 @@
     [:div.column.col-6.col-md-12
      [:div.card.info-login
       [:div.card-image
-       [:img.img-responsive {:src "./static/img/freecoin_logo.png"}]]
+       [:img.img-responsive {:src "./static/img/commonfare.png"}]]
       [:div.card-header
        [:div.card-title.h5.login-title "Your social wallet"]
        [:div.card-subtitle.text-gray "Freedom to create and manage your complementary currency"]]
       [:div.card-body
-       "The social wallet toolkit is a set of tools to let groups design and/or manage currencies in a simple and secure way.
-It is made for participatory and democratic organisations who want to incentivise participation - unlike centralised banking databases and experiment with different economic models - unlike centralised nation state."]]]
+       "Commonfare.net is developed thanks to the project PIE News, that has received funding from the European Union’s Horizon 2020 research and innovation programme under grant agreement No 687922"]]]
 
     [:div.column.col-6.col-md-12
      [:div.card

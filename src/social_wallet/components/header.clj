@@ -7,7 +7,7 @@
     [:a.bold.navbar-brand.mr-2 {:href "/"} [:img {:src "/static/img/logo.svg"}]]]
 
    [:div.navbar-section.commonfare-links
-    [:a {:class "btn btn-link"
+    [:a#login {:class "btn btn-link"
          :href "/login"} " Login"]
     [:a#signup {:class "btn btn-primary"
                 :href "/signup"} " Sign-up"]]])
@@ -41,7 +41,7 @@
         [:a {:href "/logout"} (t/locale [:navbar :log-out])]]]]]
     [:a.bold.navbar-brand.mr-2 {:href "/"}
      [:img {:src "/static/img/logo.svg"}]]]
-   [:div.navbar-section.hide-md
+   [:div.navbar-section.hide-md.commonfare-section
     [:a.btn.btn-link {:href "/sendto" :id "sendto"}
      (t/locale [:wallet :send])]
     [:a.btn.btn-link {:href "/transactions" :id "transactions"}

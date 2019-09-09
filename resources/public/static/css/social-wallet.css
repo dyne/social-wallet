@@ -298,6 +298,10 @@ footer .navbar-section a img {
 	background: #366460;
 }
 
+.header .btn.btn-link {
+  color: white;
+}
+
  .btn.btn-primary {
     background: #366460;
     border-color: #366460;

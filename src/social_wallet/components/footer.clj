@@ -12,7 +12,12 @@
       [:img {:src "/static/img/swbydyne.png"
              :alt   "Software by Dyne.org"
              :style "width: 140px"
-             :title "Software by Dyne.org"}]]]
+             :title "Software by Dyne.org"}]]
+      [:img {:src "/static/img/eu.png"
+             :alt   "european commission"
+             :style "width: 140px"
+             :title "european commission"}]
+     ]
     
     [:section.navbar-section
      [:a {:href "https://github.com/Commonfare-net/social-wallet" :target "blank"} "Github"]]]
