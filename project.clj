@@ -38,7 +38,8 @@
                  [ring-logger "1.0.1"]
                  
                  [etaoin "0.3.5"]
-                 
+                 [org.flatland/ordered "1.5.7"]
+
                  ;; Readable time formatter lib
                  [clj-time "0.15.0"]
                  ;; json

@@ -57,9 +57,6 @@ table .text-ellipsis {
 	max-width: 150px;
 }
 
-li {
-    /* padding: .5em; */
-}
 
 .secrets {
 	padding: 1em;
@@ -80,9 +77,6 @@ li {
 	font-size: 1em;
 }
 
-.slices {
-
-}
 
 .slices ul {
 	list-style: none;
@@ -102,7 +96,7 @@ li {
 
 /* UPDATED STYLE */
 .header {
-	background: #f3f3f7;
+	background: #E7472E;
     margin-top: 24px;
     margin-bottom: 16px;
     padding: 8px;
@@ -125,13 +119,17 @@ li {
 
 footer {
 	margin-top: 60px;
+	background: transparent;
 }
 
 footer .navbar-section a img {
-	margin-left: 36px
+	margin-left: 36px;
+	width: 100px;
 }
 
-
+.divider-vert[data-content]::after, .divider[data-content]::after {
+	background: #eef4f3;
+}
 
 .wallet-card {
 	margin-bottom: 16px;
@@ -267,4 +265,67 @@ footer .navbar-section a img {
 		height: 250px;
 		display: block;
 	}
-  }
+	}
+	
+
+	body {
+		background: #eef4f3;
+	}
+	
+	 .btn {
+		border-color: #366460;
+	}
+	
+	 .btn-primary {
+		background: #366460;
+	}
+
+	table tbody {
+		background: white;
+	}
+
+	.btn.btn-link.active, .btn.btn-link:active, .btn.btn-link:focus, .btn.btn-link:hover {
+    color: #366460;
+}
+
+ .chip {
+	color: #488580 !important;
+    background-color: #e1e8e7 !important;
+}
+
+ .header .btn-primary {
+	border-color: #366460;
+	background: #366460;
+}
+
+ .btn.btn-primary {
+    background: #366460;
+    border-color: #366460;
+    color: #fff;
+}
+
+ .pagination .page-item.active a {
+	background: #366460;
+
+ }
+
+ .btn.btn-primary:hover {
+	border-color: #243e3b !important;
+	background: #243e3b !important;
+}
+/* .header .btn {
+	border-color: #366460;
+} */
+
+ .header .commonfare-links > a {
+	color: white
+}
+
+ .header .dropdown > a {
+  color: white;
+}
+
+ .header img {
+	width: 120px;
+}	
+

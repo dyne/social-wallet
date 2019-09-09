@@ -1,19 +1,16 @@
 (ns social-wallet.components.header
   (:require [auxiliary.translation :as t]))
 
-
 (def header-guest
   [:header.navbar.header
    [:div.navbar-section
-    [:a.bold.navbar-brand.mr-2 {:href "/"} "social wallet"]]
-   
-   [:div.navbar-section
-    [:a#login {:class "btn"
+    [:a.bold.navbar-brand.mr-2 {:href "/"} [:img {:src "/static/img/logo.svg"}]]]
+
+   [:div.navbar-section.commonfare-links
+    [:a {:class "btn btn-link"
          :href "/login"} " Login"]
     [:a#signup {:class "btn btn-primary"
-         :href "/signup"} " Sign-up"]]
-   
-   ])
+                :href "/signup"} " Sign-up"]]])
 
 
 (defn header-account [account]
@@ -42,7 +39,8 @@
         [:a {:href "/app-state"} (t/locale [:navbar :conf])]]
        [:li.menu-item
         [:a {:href "/logout"} (t/locale [:navbar :log-out])]]]]]
-    [:a.bold.navbar-brand.mr-2 {:href "/" :id "home"} "social wallet"]]
+    [:a.bold.navbar-brand.mr-2 {:href "/"}
+     [:img {:src "/static/img/logo.svg"}]]]
    [:div.navbar-section.hide-md
     [:a.btn.btn-link {:href "/sendto" :id "sendto"}
      (t/locale [:wallet :send])]
@@ -66,5 +64,7 @@
        [:a {:href "/logout" :id "logout"} (t/locale [:navbar :log-out])]]
       ]
      ]]])
+
+
    
    
