@@ -59,7 +59,7 @@
   (GET "/" request
     (let [{{:keys [auth]} :session}  request
           {{:keys [page per-page tag]} :params} request]
-      (if (and auth (auth/get-account authenticator auth))
+      (if (and auth (auth/get-account authenticator (:email auth)))
         (wallet-page auth (c/get-swapi-params) (:uri request) (cond-> {}
                                                                 tag (assoc :tags (list tag))
                                                                 page (assoc :page page)
