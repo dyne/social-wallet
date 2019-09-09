@@ -23,7 +23,5 @@ just-auth:
     time-window-secs: 3600
     threshold: 1000
 
-swapi:
+noapikey-swapi:
   base-url: "http://localhost:3000/wallet/v1"
-  apikey-file: "apikey.yaml"
-  apikey-name: "device-id"
