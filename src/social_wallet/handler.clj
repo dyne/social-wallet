@@ -93,7 +93,7 @@
       account (auth/sign-in  authenticator email password {})]
          ;; TODO: pass :ip-address in last argument map
      (let [session {:auth account}]
-       (-> (redirect "/")
+       (-> (redirect (str (:url (mount/args)) "/"))
            (assoc :session session)))
      (f/when-failed [e]
                     (web/render-error-page
@@ -106,7 +106,7 @@
       (f/if-let-ok? [auth-resp (logged-in? auth)]
                     (if (and auth (= (:email auth) email))
                       (wallet-page auth (c/get-swapi-params) (:uri request))
-                      (redirect "/login"))
+                      (redirect (str (:url (mount/args)) "/login")))
                     (web/render-error-page (f/message auth-resp)))))
 
 
@@ -154,7 +154,7 @@
       email (-> request :params :email)
       password (-> request :params :password)
       repeat-password (-> request :params :repeat-password)
-      activation {:activation-uri (get-host (:link-port (mount/args)))}]
+      activation {:activation-uri (:url (mount/args))}]
      (web/render
       (if (= password repeat-password)
         (f/try*
@@ -183,7 +183,7 @@
   (GET "/activate/:email/:activation-id"
     [email activation-id :as request]
     (let [activation-uri
-          (str (get-host (:link-port (mount/args)))
+          (str (:url (mount/args))
                "/activate/" email "/" activation-id)]
       (web/render
        [:div
@@ -201,7 +201,7 @@
 
   (GET "/qrcode/:email"
     [email :as request]
-    (qrcode/transact-to email  (get-host (:link-port (mount/args)))))
+    (qrcode/transact-to email  (:url (mount/args))))
 
 
   (GET "/session" request
@@ -211,7 +211,7 @@
   (GET "/logout" request
     (conj {:session nil}
           ; (web/render [:h1 "Logged out."])
-          (redirect "/")))
+          (redirect (str (:url (mount/args)) "/"))))
 
 
   (GET "/qrcode" request
@@ -256,7 +256,7 @@
                                                    :description description
                                                    :from (:email auth)
                                                    :tags parsed-tags})
-               (redirect "/"))
+               (redirect (str (:url (mount/args)) "/")))
            (web/render-error-page auth "Not enough funds to make a transaction."))
          (web/render-error-page auth "The receiver is not a valid account.")
          )
