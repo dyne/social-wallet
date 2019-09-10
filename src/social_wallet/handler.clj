@@ -114,7 +114,7 @@
     (let [{{:keys [auth]} :session} request
           {{:keys [page tag per-page]} :params} request]
       (f/if-let-ok? [auth-resp (logged-in? auth)]
-                    (web/render auth (transactions auth
+                    (web/render auth (transactions nil ;; here we want ALL transactions, not for a specific account
                                                    nil
                                                    (c/get-swapi-params)
                                                    (cond-> {}
