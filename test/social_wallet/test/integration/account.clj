@@ -33,6 +33,7 @@
             [org.httpkit.client :as client]
             [mount.core :as mount]
             [taoensso.timbre :as log])
+  ;; Somehow this doesnt work with refers, keep use
   (:use [etaoin.api])
 
   (:import 
@@ -53,8 +54,7 @@
 
 
 (against-background [(before :contents (mount/start-with-args {:port 3001
-                                                               :host "http://localhost"
-                                                               :link-port 3001
+                                                               :url "http://localhost:3001"
                                                                :stub-email true
                                                                :with-apikey false
                                                                :config "test-resources/config.yaml"}))
