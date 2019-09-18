@@ -79,7 +79,11 @@
                                                                      org.clojure/tools.reader]]
                  ;; authentication library
                  [org.clojars.dyne/just-auth "0.5.0" :exclusions [com.taoensso/encore
-                                                                  org.clojure/tools.reader]]]
+                                                                  org.clojure/tools.reader
+                                                                  cheshire
+                                                                  com.fasterxml.jackson.core/jackson-core
+                                                                  com.fasterxml.jackson.dataformat/jackson-dataformat-cbor
+                                                                  com.fasterxml.jackson.dataformat/jackson-dataformat-smile]]]
 
 
   :pedantic? :warn
@@ -89,7 +93,8 @@
                    "test-resources"]
   :main social-wallet.core
   
-  :profiles {:dev {:dependencies [[midje "1.9.6" :exclusions [io.aviso/pretty commons-codec clj-time]]
+  :profiles {:dev {:dependencies [[midje "1.9.6" :exclusions [io.aviso/pretty commons-codec clj-time
+                                                              potemkin ]]
                                   [javax.servlet/servlet-api "2.5"]
                                   [org.jsoup/jsoup "1.9.2"]]
                    :plugins [[lein-midje "3.1.3"]
