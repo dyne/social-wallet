@@ -51,5 +51,5 @@
                                  (let [response (.get (Jsoup/connect "http://localhost:3001/"))]
                                    (-> response
                                        (.select "body")
-                                       (.select "div.card-title")
+                                       (.select "div.card-login")
                                        (.text)) => "Login"))))

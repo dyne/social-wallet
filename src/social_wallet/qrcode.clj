@@ -22,4 +22,5 @@
 (defn transact-to [email base-url]
   (qr/as-input-stream
    (qr/from (str base-url "/sendto/" email)
+            :size [250 250]
             :charset "ISO-8859-1")))

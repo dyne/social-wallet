@@ -1,50 +1,46 @@
 (ns social-wallet.components.transactions_list
   (:require
    [social-wallet.components.pagination :refer [pagination]]
-   [social-wallet.swapi :as swapi])
-  )
+   [social-wallet.swapi :as swapi]
+   [social-wallet.webpage :refer [render-error]]
+   [clj-time.format :as ft]
+   [clavatar.core :as clavatar]
+   [social-wallet.stores :as stores]
+   [taoensso.timbre :as log]
+   [just-auth.db.account :as auth]
+   [failjure.core :as f]))
 
+(def formatter (ft/formatter "dd MMMM, yyyy"))
 
+(defn transactions [account tag swapi-params query-params uri]
+  (f/attempt-all [response (swapi/list-transactions swapi-params (cond-> {}
+                                                                   query-params (merge query-params)
+                                                                   account (assoc :account (:email account))))
+                  transactions (:transactions response)
+                  total (:total-count response)
+                  tags (into [] (set (filter #(> (count %) 0)
+                                             (reduce into []
+                                                     (map #(:tags %) (:transactions response))))))]
 
-(defn transactions [account swapi-params query-params uri]
-  (let [response (swapi/list-transactions swapi-params (cond-> {}
-                                                         query-params (merge query-params)
-                                                         account (assoc :account (:email account))))
-        transactions (:transactions response)
-        total (:total-count response)
-        tags (into [] (set (filter #(> (count %) 0)
-                                   (reduce into []
-                                           (map #(:tags %) (:transactions response))))))]
-    [:div.filter
-     [:input.filter-tag {:hidden true :checked true :name "filter-radio" :type "radio" :id "tag-0"}]
-     (for [t tags]
-       [:input.filter-tag {:hidden true :name "filter-radio" :type "radio" :id (str "tag-" (inc (.indexOf tags t)))}])
+                 [:div
+                  [:div.filter-nav
+                   [:a {:href (str uri)} [:label.chip "All"]]
+                   (for [t tags]
+                     [:a {:href (str uri "?tag=" t)} [:label.chip t]])]
+                  [:div.feeds (doall (for [t transactions]
 
-     [:div.filter-nav
-      [:label.chip {:for "tag-0"} "All"]
-      (for [t tags]
-        [:label.chip {:for (str "tag-" (inc (.indexOf tags t)))} t])]
-
-     [:div.filter-body
-      [:table.func--transactions-page--table.table.table-striped
-       [:thead
-        [:tr
-        ;; TODO: from transation
-         [:th "From"]
-         [:th "To"]
-         [:th "Amount"]
-         [:th "Time"]
-         [:th "Tags"]]]
-       [:tbody
-        (doall (for [t transactions]
-                 [:tr.filter-item 
-                  {:data-tag (str "tag-" (inc (.indexOf tags (first (:tags t)))))}
-                  
-                  
-                  [:td (:from-id t)]
-                  [:td (:to-id t)]
-                  [:td (:amount-text t)]
-                  [:td (:timestamp t)]
-                  [:td (for [tag (:tags t)] (if (> (count tag) 0) [:div.chip tag] [:div]))]]))]]]
-     (when (= uri "/transactions")
-       (pagination total (or (:page query-params) 1) uri))]))
+                                       [:div [:div.tile.feed
+                                              [:div.tile-icon
+                                               [:figure.avatar.avatar-lg
+                                                [:img {:src (clavatar/gravatar (:from-id t) :size 87 :default :mm)}]]]
+                                              [:div.tile-content
+                                               [:p.tile-title [:b (:name (auth/fetch (:account-store stores/stores)  (:from-id t)))] " sent " [:b (:amount-text t)] " " (:currency t) " to " [:b (:name (auth/fetch (:account-store stores/stores)  (:to-id t)))]]
+                                               [:p.tile-subtitle (:description t)]
+                                               [:div.clearfix
+                                                [:p.text-gray.float-left (ft/unparse formatter (ft/parse (:timestamp t)))]
+                                                [:div.float-left (for [tag (:tags t)] (if (> (count tag) 0) [:div.chip tag] [:div]))]]]]
+                                        [:div.divider]]))]
+                  (when (and (integer? total) (empty? (:tags query-params)))
+                    (pagination total (or (:page query-params) 1) uri))]
+                 (f/when-failed [response]
+                                (render-error response))))

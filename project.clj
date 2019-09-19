@@ -37,6 +37,10 @@
                  [ring/ring-session-timeout "0.2.0"]
                  [ring-logger "1.0.1"]
                  
+                 [etaoin "0.3.5"]
+                 
+                 ;; Readable time formatter lib
+                 [clj-time "0.15.0"]
                  ;; json
                  [org.clojure/data.json "0.2.6"]
 
@@ -60,8 +64,8 @@
                  [tolitius/mount-up "0.1.2" :exclusions [org.clojure/tools.logging]]
 
                  ;; HTTP server
-                 [http-kit "2.3.0"]
-
+                 [http-kit "2.3.0"]                 
+                                
                  ;; Gravatar
                  [clavatar "0.2.1"]
 
@@ -74,8 +78,12 @@
                  [org.clojars.dyne/clj-storage "0.10.0" :exclusions [com.taoensso/encore
                                                                      org.clojure/tools.reader]]
                  ;; authentication library
-                 [org.clojars.dyne/just-auth "0.6.0-SNAPSHOT" :exclusions [com.taoensso/encore
-                                                                  org.clojure/tools.reader]]]
+                 [org.clojars.dyne/just-auth "0.5.0" :exclusions [com.taoensso/encore
+                                                                  org.clojure/tools.reader
+                                                                  cheshire
+                                                                  com.fasterxml.jackson.core/jackson-core
+                                                                  com.fasterxml.jackson.dataformat/jackson-dataformat-cbor
+                                                                  com.fasterxml.jackson.dataformat/jackson-dataformat-smile]]]
 
 
   :pedantic? :warn
@@ -85,7 +93,8 @@
                    "test-resources"]
   :main social-wallet.core
   
-  :profiles {:dev {:dependencies [[midje "1.9.6" :exclusions [io.aviso/pretty commons-codec clj-time]]
+  :profiles {:dev {:dependencies [[midje "1.9.6" :exclusions [io.aviso/pretty commons-codec clj-time
+                                                              potemkin ]]
                                   [javax.servlet/servlet-api "2.5"]
                                   [org.jsoup/jsoup "1.9.2"]]
                    :plugins [[lein-midje "3.1.3"]
