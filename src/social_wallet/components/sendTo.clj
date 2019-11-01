@@ -1,4 +1,6 @@
-(ns social-wallet.components.sendTo)
+(ns social-wallet.components.sendTo
+  (:require [just-auth.core :as auth]
+            [social-wallet.authenticator :refer [authenticator]]))
 
 
 (defn mini-render-sendTo
@@ -10,12 +12,15 @@
             :method "post"}
 
      [:div.form-group
-      [:input.form-input.form-control {:type "text" :id "amount" :name "amount"
+      [:input.form-input.form-control {:id "amount" :name "amount"
                                        :placeholder "Insert the amount to transfer"}]]
 
      [:div.form-group
-      [:input.form-input.form-control {:type "text" :id "to" :name "to"
-                                       :placeholder "Type the receiver username"}]]
+      [:select.form-select.form-control {:id "to" :name "to"}
+       (let [participants (auth/list-accounts authenticator {:activated true})]
+         (doall (for [p participants]
+                  [:option {:value (:email p)} (:name p)])))
+       ]]
 
 
      [:div.form-group
@@ -46,10 +51,13 @@
        [:input.form-input.form-control {:type "text" :id "amount" :name "amount"
                                         :placeholder "Insert the amount to transfer"}]]
 
+      
       [:div.form-group
        [:label.form-label {:for "to"} "To"]
-       [:input.form-input.form-control {:type "text" :id "to" :name "to"
-                                        :placeholder "Type the receiver username"}]]
+       [:select.form-select.form-control {:id "to" :name "to"}
+        (let [participants (auth/list-accounts authenticator {:activated true})]
+          (doall (for [p participants]
+                   [:option {:value (:email p)} (:name p)])))]]
 
 
       [:div.form-group
@@ -81,8 +89,11 @@
 
       [:div.form-group
        [:label.form-label {:for "to"} "To"]
-       [:input.form-input.form-control {:type "text" :id "to" :name "to" :value email
-                                        :placeholder "Type the receiver username"}]]
+
+       [:select.form-select.form-control {:id "to" :name "to"}
+        (let [participants (auth/list-accounts authenticator {:activated true})]
+          (doall (for [p participants]
+                   [:option {:value (:email p) :selected (if (= email (:email p)) "selected" nil)} (:name p)])))]]
 
 
       [:div.form-group

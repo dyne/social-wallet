@@ -393,9 +393,6 @@ a, a:visited {
 	color: #2b90d9;
 	border-color: transparent
 }
-.info-login .card-image {
-	/* margin: 16px; */
-}
 
 .info .chip {
 	margin-left: 8px;
@@ -420,6 +417,12 @@ a, a:visited {
 footer {
 	margin-top: 60px;
 }
+
+
+select {
+	color: #191b23 !important
+}
+
 
 footer .footer_container .logo {
 	width: 300px;

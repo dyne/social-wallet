@@ -93,5 +93,5 @@
                                   [javax.servlet/servlet-api "2.5"]
                                   [org.jsoup/jsoup "1.9.2"]]
                    :plugins [[lein-midje "3.1.3"]
-                             [lein-ring "0.12.0"]]}}
+                             [lein-ring "0.12.5"]]}}
   )
