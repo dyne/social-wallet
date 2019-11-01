@@ -25,5 +25,5 @@ just-auth:
 
 swapi:
   base-url: "http://localhost:3000/wallet/v1"
-  apikey-file: "apikey.yaml"
+  apikey-file: "../social-wallet-api/apikey.yaml"
   apikey-name: "device-id"

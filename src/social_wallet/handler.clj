@@ -22,7 +22,8 @@
 
             [failjure.core :as f]
             [mount.core :as mount]
-
+            [clj-storage.core :refer [update!]]
+            
             [social-wallet.webpage :as web]
             [social-wallet.qrcode :as qrcode]
             [social-wallet.config :refer [config] :as c]
@@ -64,7 +65,7 @@
                                                                 tag (assoc :tags (list tag))
                                                                 page (assoc :page page)
                                                                 per-page (assoc :per-page per-page)))
-        (web/render login-form))))
+        (web/render (login-form (c/get-swapi-params))))))
 
 
   (GET "/app-state" {{:keys [auth]} :session}
@@ -82,7 +83,7 @@
                   [:div
                    [:div.toast.toast-warning (str "Already logged in with account: " (:email auth))]
                    [:a.btn.btn-primary {:href "/logout" :style "margin-top: 16px"} "Logout"]])
-      (web/render login-form)))
+      (web/render (login-form (c/get-swapi-params)))))
 
 
 
@@ -127,7 +128,7 @@
   (GET "/participants" request
     (let [{{:keys [auth]} :session} request]
       (f/if-let-ok? [auth-resp (logged-in? auth)]
-                    (web/render auth (render-participants (c/get-swapi-params)))
+                    (web/render auth (render-participants (c/get-swapi-params) auth))
                     (web/render-error-page (f/message auth-resp)))))
   (GET "/tags" request
     (let [{{:keys [auth]} :session} request
@@ -237,7 +238,18 @@
                     (web/render auth (render-sendTo email))
                     (web/render-error-page (f/message auth-resp)))))
 
-  (POST "/sendto" request
+
+   (POST "/deactivate" request
+     (let [{{:keys [email]} :params} request
+           {{:keys [auth]} :session} request
+           ]
+       (if (some #{:admin} (:flags (auth/get-account authenticator (:email auth))))
+         (do (update! authenticator email #(assoc % :activated false))
+             (redirect "/participants"))
+         )
+       (println email))
+     )
+   (POST "/sendto" request
     (let [{{:keys [amount to tags description]} :params} request
           {{:keys [auth]} :session} request
           {{:keys [page tag per-page]} :params} request]

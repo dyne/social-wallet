@@ -62,13 +62,13 @@
                            (:email params) (merge {:account-id (:email params)})))
                   :body-parse-fn #(-> % :body (json/read-str :key-fn keyword) :amount)}))
 
-(defn label-request [swapi-params params]
+(defn label-request [swapi-params]
   (swapi-request {:swapi-params swapi-params
                   :endpoint "label"
                   :json (json/write-str
-                                 {:connection "mongo"
-                                  :type "db-only"})
-                  :body-parse-fn #(-> % :body (json/read-str :key-fn keyword) :label)}))
+                         {:connection "mongo"
+                          :type "db-only"})
+                  :body-parse-fn #(-> % :body (json/read-str :key-fn keyword))}))
 
 (defn sendto [swapi-params params]
   (swapi-request {:swapi-params swapi-params

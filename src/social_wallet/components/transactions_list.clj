@@ -22,7 +22,8 @@
                                              (reduce into []
                                                      (map #(:tags %) (:transactions response))))))]
 
-                 [:div
+                 [:div.transactions
+                  [:h3 "Transactions list"]
                   [:div.filter-nav
                    [:a {:href (str uri)} [:label.chip "All"]]
                    (for [t tags]
