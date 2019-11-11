@@ -23,7 +23,7 @@
             [failjure.core :as f]
             [mount.core :as mount]
             [clj-storage.core :refer [update!]]
-            
+
             [social-wallet.webpage :as web]
             [social-wallet.qrcode :as qrcode]
             [social-wallet.config :refer [config] :as c]
@@ -37,6 +37,8 @@
             [social-wallet.components.sendTo :refer [render-sendTo]]
             [social-wallet.components.login :refer [login-form]]
             [social-wallet.components.signup :refer [signup-form]]
+            [social-wallet.components.recover :refer [recover-form]]
+            [social-wallet.components.reset :refer [reset-form]]
             [social-wallet.pages.wallet :refer [wallet-page]]
             [buddy.hashers :as hashers]
 
@@ -147,7 +149,58 @@
   (GET "/signup" request
     (web/render signup-form))
 
-  
+  (GET "/recover-password" request
+    (web/render recover-form))
+
+  (POST "/recover-password" request
+    (f/attempt-all
+     [email (-> request :params :email)
+      recover {:reset-uri (get-host (:link-port (mount/args)))}]
+     (web/render
+      (f/try*
+       (f/if-let-ok?
+        [recover (auth/send-password-reset-message
+                  authenticator
+                  email
+                  recover)]
+        [:div
+         [:h2 (str "reset created: "
+                   " &lt;" email "&gt;")]
+         [:h3 "chec your mail."]]
+        (web/render-error
+         (str "Failure creating account: "
+              (f/message recover))))))
+     (f/when-failed [e]
+                    (web/render-error-page
+                     (str "Sign-up failure: " (f/message e))))))
+
+
+  (POST "/reset-password/:email/:token" request
+    (f/attempt-all
+     [email (-> request :params :email)
+      password (-> request :params :password)
+      repeat-password (-> request :params :repeat)
+      reset {:password-reset-link (get-host (:link-port (mount/args)))}]
+     (web/render
+      (if (= password repeat-password)
+        (f/try*
+         (f/if-let-ok?
+          [reset-psw (auth/reset-password authenticator
+                                          email
+                                          password
+                                          reset)]
+          [:div
+           [:h2 (str "password created: "
+                      " &lt;" email "&gt;")]]
+          (web/render-error
+           (str "Failure creating account: "
+                (f/message reset-psw)))))
+        (web/render-error
+         "Repeat password didn't match")))
+     (f/when-failed [e]
+                    (web/render-error-page
+                     (str "reset password failure: " (f/message e))))))
+
 
   (POST "/signup" request
     (f/attempt-all
@@ -179,7 +232,14 @@
                     (web/render-error-page
                      (str "Sign-up failure: " (f/message e))))))
 
-  
+  (GET "/reset-password/:email/:token"
+    [email token :as request]
+    (let [reset-uri
+          (str (get-host (:link-port (mount/args)))
+               "/activate/" email "/" token)]
+      (web/render (reset-form email token reset-uri))))
+
+
 
   (GET "/activate/:email/:activation-id"
     [email activation-id :as request]
@@ -239,17 +299,15 @@
                     (web/render-error-page (f/message auth-resp)))))
 
 
-   (POST "/deactivate" request
-     (let [{{:keys [email]} :params} request
-           {{:keys [auth]} :session} request
-           ]
-       (if (some #{:admin} (:flags (auth/get-account authenticator (:email auth))))
-         (do (update! authenticator email #(assoc % :activated false))
-             (redirect "/participants"))
-         )
-       (println email))
-     )
-   (POST "/sendto" request
+  (POST "/deactivate" request
+    (let [{{:keys [email]} :params} request
+          {{:keys [auth]} :session} request]
+      (if (some #{:admin} (:flags (auth/get-account authenticator (:email auth))))
+        (do (update! authenticator email #(assoc % :activated false))
+            (redirect "/participants")))
+      (println email)))
+
+  (POST "/sendto" request
     (let [{{:keys [amount to tags description]} :params} request
           {{:keys [auth]} :session} request
           {{:keys [page tag per-page]} :params} request]
@@ -270,9 +328,8 @@
                                                    :tags parsed-tags})
                (redirect "/"))
            (web/render-error-page auth "Not enough funds to make a transaction."))
-         (web/render-error-page auth "The receiver is not a valid account.")
-         )
-       
+         (web/render-error-page auth "The receiver is not a valid account."))
+
        (f/when-failed [e]
            ;; TODO: make it appear in form
                       (web/render-error-page
