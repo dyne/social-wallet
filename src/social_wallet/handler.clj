@@ -175,31 +175,31 @@
                      (str "Sign-up failure: " (f/message e))))))
 
 
-  (POST "/reset-password/:email/:token" request
-    (f/attempt-all
-     [email (-> request :params :email)
-      password (-> request :params :password)
-      repeat-password (-> request :params :repeat)
-      reset {:password-reset-link (get-host (:link-port (mount/args)))}]
-     (web/render
-      (if (= password repeat-password)
-        (f/try*
-         (f/if-let-ok?
-          [reset-psw (auth/reset-password authenticator
-                                          email
-                                          password
-                                          reset)]
-          [:div
-           [:h2 (str "password created: "
-                      " &lt;" email "&gt;")]]
-          (web/render-error
-           (str "Failure creating account: "
-                (f/message reset-psw)))))
-        (web/render-error
-         "Repeat password didn't match")))
-     (f/when-failed [e]
-                    (web/render-error-page
-                     (str "reset password failure: " (f/message e))))))
+  ;; (POST "/reset-password/:email/:token" request
+  ;;   (f/attempt-all
+  ;;    [email (-> request :params :email)
+  ;;     password (-> request :params :password)
+  ;;     repeat-password (-> request :params :repeat)
+  ;;     reset {:password-reset-link (get-host (:link-port (mount/args)))}]
+  ;;    (web/render
+  ;;     (if (= password repeat-password)
+  ;;       (f/try*
+  ;;        (f/if-let-ok?
+  ;;         [reset-psw (auth/reset-password authenticator
+  ;;                                         email
+  ;;                                         password
+  ;;                                         reset)]
+  ;;         [:div
+  ;;          [:h2 (str "password created: "
+  ;;                     " &lt;" email "&gt;")]]
+  ;;         (web/render-error
+  ;;          (str "Failure creating account: "
+  ;;               (f/message reset-psw)))))
+  ;;       (web/render-error
+  ;;        "Repeat password didn't match")))
+  ;;    (f/when-failed [e]
+  ;;                   (web/render-error-page
+  ;;                    (str "reset password failure: " (f/message e))))))
 
 
   (POST "/signup" request

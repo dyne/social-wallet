@@ -30,9 +30,7 @@
         [:input {:type "submit" :name "login-submit" :value "Login"
                  :class "btn btn-primary btn-lg btn-block"
                  :style "margin-top: 1em"}]]]
-      [:div.card-footer
-       [:div.divider.text-center {:data-content "OR"}]
-       [:a.btn.btn-link.p-centered {:href "/recover-password"} "Reset your password"]]]]
+      ]]
     [:div.column.col-6.col-md-12
      [:div.card.info-login
       [:div.card-image

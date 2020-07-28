@@ -27,7 +27,6 @@
                   (if (some #{:admin} (:flags (auth/get-account authenticator (:email auth))))
                     [:td
                      (if (= true (:activated p))
-                       [:form {:action (str "/deactivate?email=" (:email p))
-                               :method "post"}
-                       [:input.btn.btn-error {:type "submit" :value "deactivate"}]]
-                       [:a.btn.primary "activate"])])]))))]])
+                       "active"
+                       "pending activation")
+                     ])]))))]])
